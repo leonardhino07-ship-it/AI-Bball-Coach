@@ -1,153 +1,96 @@
 import streamlit as st
-import json
-import os
-import datetime
 from groq import Groq
-from duckduckgo_search import DDGS  # La nuova libreria per la ricerca web!
 
-# ==============================================================================
-# CONFIGURAZIONE INIZIALE
-# ==============================================================================
-st.set_page_config(page_title="AI Basketball Coach (Web Search Edition)", page_icon="🏀", layout="wide")
+# Configurazione della pagina
+st.set_page_config(page_title="AI Basketball Coach", page_icon="🏀", layout="centered")
 
-FILE_PROFILO = "profilo_giocatore.json"
-FILE_STORICO = "storico_video.json"
+st.title("🏀 AI Basketball Coach")
+st.write("Il tuo preparatore atletico e allenatore personale di pallacanestro basato sull'intelligenza artificiale.")
 
-# Inserisci la tua API Key di Groq per provare sul PC
-# Usa questa riga per la versione online
-GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
+# Controllo della chiave API nei Secrets di Streamlit
+if "GROQ_API_KEY" in st.secrets:
+    groq_api_key = st.secrets["GROQ_API_KEY"]
+else:
+    st.error("⚠️ Chiave API di Groq non trovata nei Secrets di Streamlit! Configurala nelle impostazioni della app.")
+    st.stop()
 
+# Inizializzazione del client Groq
+client = Groq(api_key=groq_api_key)
 
-def interroga_ai_stream(prompt):
-    try:
-        client = Groq(api_key=GROQ_API_KEY)
-        stream = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[{"role": "user", "content": prompt}],
-            stream=True
+# Form per la raccolta dei dati
+with st.form("coach_form"):
+    st.subheader("Profilo del Giocatore e Parametri di Allenamento")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        nome = st.text_input("Nome del giocatore")
+        eta = st.number_input("Età", min_value=5, max_value=60, value=18)
+        ruolo = st.selectbox("Ruolo principale", ["Playmaker (PG)", "Guardia (SG)", "Ala Piccola (SF)", "Ala Grande (PF)", "Centro (C)", "Tutti i ruoli"])
+        livello = st.selectbox("Livello di gioco", ["Principiante", "Intermedio", "Avanzato", "Professionista"])
+    
+    with col2:
+        obiettivo = st.text_input("Obiettivo principale (es. migliorare il tiro da 3, rapidità, palleggio)")
+        frequenza = st.selectbox("Frequenza settimanale", ["1-2 volte a settimana", "3-4 volte a settimana", "5+ volte a settimana"])
+        
+        # NUOVO CAMPO: Durata singolo allenamento
+        durata_singola = st.radio(
+            "Durata della singola sessione di allenamento:",
+            ["30 minuti", "1 ora", "1 ora e 30", "2 ore", "2 ore e 30", "3 ore"]
         )
-        for chunk in stream:
-            if chunk.choices[0].delta.content is not None:
-                yield chunk.choices[0].delta.content
-    except Exception as e:
-        yield f"\n[Errore Groq API: {e}]"
+        
+        # NUOVO CAMPO: Logistica
+        logistica = st.radio(
+            "Come ti alleni solitamente?",
+            ["Da solo", "In compagnia"]
+        )
 
+    note_extra = st.text_area("Note aggiuntive o particolari esigenze (es. infortuni, preferenze, attrezzi disponibili)")
+    
+    submit_button = st.form_submit_button(label="Genera Scheda di Allenamento Personalizzata")
 
-# --- Funzioni di salvataggio/caricamento ---
-def carica_json(file_path, default):
-    if os.path.exists(file_path):
-        with open(file_path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return default
+# Azione alla pressione del pulsante
+if submit_button:
+    with st.spinner("L'intelligenza artificiale sta analizzando ogni singolo dato per creare la tua scheda..."):
+        
+        # Prompt strutturato con obbligo di considerare TUTTI i dati
+        prompt = f"""
+        Sei un preparatore atletico ed un allenatore di pallacanestro professionista di altissimo livello. 
+        Genera una scheda di allenamento di basket dettagliata, professionale e altamente personalizzata basandoti RIGOROSAMENTE E IN MANIERA INTEGRALE su TUTTI i dati forniti dall'utente, dal primo all'ultimo, senza escludere alcun dettaglio:
 
+        DATI INSERITI DALL'UTENTE:
+        - Nome: {nome}
+        - Età: {eta} anni
+        - Ruolo: {ruolo}
+        - Livello: {livello}
+        - Obiettivo principale: {obiettivo}
+        - Frequenza settimanale: {frequenza}
+        - Durata della singola sessione: {durata_singola}
+        - Modalità di allenamento (Logistica): {logistica}
+        - Note/Esigenze extra: {note_extra}
 
-def salva_json(file_path, dati):
-    with open(file_path, "w", encoding="utf-8") as f:
-        json.dump(dati, f, indent=4, ensure_ascii=False)
+        REGOLE TASSATIVE DA RISPETTARE:
+        1. Considera e integra OGNI SINGOLO PARAMETRO sopra elencato nella creazione della scheda. Non trascurare alcuna informazione.
+        2. Adatta rigorosamente gli esercizi in base alla modalità di allenamento ({logistica}): se l'utente si allena "Da solo", proponi esercizi individuali (es. ball handling solitario, tiro in autonomia, uso di cinesini); se si allena "In compagnia", includi situazioni di 1v1, passaggio, interazione o difesa attiva.
+        3. Il volume, la quantità e l'intensità degli esercizi proposti devono rispecchiare fedelmente ed in modo proporzionato la durata della singola sessione scelta ({durata_singola}).
+        4. Struttura la scheda in modo chiaro e pulito: Riscaldamento specifico, Blocco principale focalizzato sull'obiettivo, Esercizi specifici per il ruolo e Cool-down/Stretching finale.
+        """
 
-
-# ==============================================================================
-# INTERFACCIA WEB
-# ==============================================================================
-profilo = carica_json(FILE_PROFILO, {})
-storico = carica_json(FILE_STORICO, [])
-
-with st.sidebar:
-    st.title("🏀 AI COACH")
-    st.caption("Powered by Llama 3 + Web Search 🌐")
-    menu = st.radio("Navigazione", ["Profilo Giocatore", "Genera Scheda", "Analisi Video", "Storico Video"])
-
-# --- PAGINA PROFILO ---
-if menu == "Profilo Giocatore":
-    st.header("👤 Dati del Giocatore")
-    with st.form("form_profilo"):
-        st.subheader("Informazioni Generali")
-        col1, col2 = st.columns(2)
-        lingua = col1.text_input("Lingua di output", value=profilo.get("lingua", "Italiano"))
-        eta = col2.text_input("Età", value=profilo.get("eta", ""))
-        altezza = col1.text_input("Altezza (cm)", value=profilo.get("altezza", ""))
-        peso = col2.text_input("Peso (kg)", value=profilo.get("peso", ""))
-        ruolo = st.text_input("Ruolo", value=profilo.get("ruolo", ""))
-
-        st.subheader("Stile e Obiettivi")
-        esperienza = st.text_input("Anni di esperienza", value=profilo.get("esperienza", ""))
-        giocatori_simili = st.text_input("Giocatori di riferimento (Es. Facundo Campazzo)",
-                                         value=profilo.get("giocatori_simili", ""))
-        obiettivo = st.text_input("Obiettivo", value=profilo.get("obiettivo", ""))
-
-        st.subheader("Logistica")
-        compagnia = st.text_input("Con chi ti alleni?", value=profilo.get("compagnia", ""))
-        struttura = st.text_input("Struttura (es. campetto, palestra)", value=profilo.get("struttura", ""))
-
-        if st.form_submit_button("💾 Salva Profilo"):
-            nuovo_profilo = {
-                "lingua": lingua, "eta": eta, "altezza": altezza, "peso": peso,
-                "ruolo": ruolo, "esperienza": esperienza, "giocatori_simili": giocatori_simili,
-                "obiettivo": obiettivo, "compagnia": compagnia, "struttura": struttura
-            }
-            salva_json(FILE_PROFILO, nuovo_profilo)
-            st.success("Profilo salvato con successo!")
-            st.rerun()
-
-# --- PAGINA SCHEDA (CON RICERCA WEB) ---
-elif menu == "Genera Scheda":
-    st.header("⚡ Crea Scheda Personalizzata")
-    if not profilo.get("ruolo"):
-        st.warning("Compila il Profilo Giocatore prima di generare una scheda!")
-    else:
-        col1, col2 = st.columns(2)
-        durata = col1.text_input("Durata scheda", value="4 settimane")
-        frequenza = col2.text_input("Frequenza", value="3 giorni a settimana")
-
-        if st.button("Genera Scheda NBA", type="primary"):
-            giocatori = profilo.get('giocatori_simili', '')
-            contesto_web = ""
-
-            # 1. RICERCA WEB IN TEMPO REALE
-            if giocatori:
-                with st.spinner(f"🌐 Sto cercando su internet gli allenamenti reali di {giocatori}..."):
-                    try:
-                        # Cerca su DuckDuckGo in inglese per trovare i risultati migliori sul basket
-                        query_ricerca = f"{giocatori} basketball workout drills training routine"
-                        risultati = DDGS().text(query_ricerca, max_results=3)
-
-                        contesto_web = "\nINFORMAZIONI TROVATE SUL WEB IN TEMPO REALE:\n"
-                        for r in risultati:
-                            contesto_web += f"- {r['body']}\n"
-                    except Exception as e:
-                        contesto_web = "(Ricerca web fallita, usa la tua conoscenza base)."
-
-            # 2. GENERAZIONE CON L'IA (Prompt potenziato per massima specificità)
-            with st.spinner("🧠 L'IA sta studiando i dati e creando la tua scheda dettagliata..."):
-                prompt = f"""Act as an Elite NBA Skills Trainer and Workout Designer. 
-                Create a highly detailed, day-by-day training program of {durata} (Freq: {frequenza}).
-                Profile: Role {profilo.get('ruolo')}, Experience: {profilo.get('esperienza')}. Target: {profilo.get('obiettivo')}.
-                Reference players: {giocatori}.
-                Logistics: Trains {profilo.get('compagnia')} in {profilo.get('struttura')}.
-
-                {contesto_web}
-
-                CRITICAL RULES FOR EXERCISES (DO NOT IGNORE): 
-                1. NEVER use vague descriptions like "Shooting drills", "Ball handling for 10 mins", or "Pick and roll practice".
-                2. For EVERY SINGLE EXERCISE in the workout, you MUST use this exact strict structure:
-                   - 🎯 **[Nome Esercizio]**
-                   - 📍 **Setup**: Exact court positioning and equipment (e.g., "Put a cone at the top of the key and start at half court").
-                   - ⚙️ **Execution**: Step-by-step instructions on what the player must physically do (e.g., "Pound dribble right, cross between legs, explode past cone").
-                   - 🔢 **Sets & Reps**: Exact numbers (e.g., "3 sets of 10 MAKES", NEVER "10 minutes").
-                   - ⏱️ **Rest**: Specific rest time (e.g., "45 seconds between sets").
-                   - 💡 **Pro Tip**: One biomechanical or mental focus point (e.g., "Drop your hips on the crossover").
-
-                3. If I provided "INFORMAZIONI TROVATE SUL WEB", extract the specific drills and format them using the exact structure above.
-                4. Translate everything to {profilo.get('lingua', 'Italiano')}, but keep the actual drill names in English if they are common (like "Mikan Drill" or "Pound Crossover")."""
-
-                st.write_stream(interroga_ai_stream(prompt))
-
-# --- PAGINA VIDEO E STORICO RESTANO INVARIATE ---
-elif menu == "Analisi Video":
-    st.header("🔍 Analisi Sessione Video")
-    st.info("Funzione in fase di sviluppo per l'analisi visiva avanzata.")
-
-elif menu == "Storico Video":
-    st.header("🕰️ Storico Video")
-    if not storico:
-        st.info("Nessuna sessione trovata.")
+        try:
+            chat_completion = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[
+                    {"role": "system", "content": "Sei un coach di basket esperto, preciso e rigoroso che crea schede dettagliate."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.7,
+                max_tokens=2500
+            )
+            
+            scheda = chat_completion.choices[0].message.content
+            st.success("Scheda generata con successo!")
+            st.markdown("---")
+            st.markdown(scheda)
+            
+        except Exception as e:
+            st.error(f"Si è verificato un errore durante la generazione della scheda: {e}")
