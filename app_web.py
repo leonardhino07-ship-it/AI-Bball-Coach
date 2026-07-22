@@ -127,7 +127,7 @@ else:
             st.session_state['logged_in'] = False
             st.rerun()
 
-    st.write("Programmazione settimanale ad altissimo dettaglio biomeccanico con analisi video YouTube in tempo reale.")
+    st.write("Programmazione settimanale ad altissimo dettaglio biomeccanico.")
 
     if "GROQ_API_KEY" in st.secrets:
         groq_api_key = st.secrets["GROQ_API_KEY"]
