@@ -237,7 +237,7 @@ else:
             st.session_state['scheda_generata'] = ''
             st.rerun()
 
-    st.write("Programmazione settimanale Elite con calcolo rigoroso del volume e link video YouTube verificati.")
+    st.write("Programmazione settimanale Elite con calcolo rigoroso del volume.")
 
     if "GROQ_API_KEY" in st.secrets:
         groq_api_key = st.secrets["GROQ_API_KEY"]
