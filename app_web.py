@@ -206,13 +206,6 @@ if not st.session_state['logged_in']:
         reg_user = st.text_input("Scegli un Username Unico")
         reg_email = st.text_input("Email")
         reg_pass = st.text_input("Scegli una Password", type="password")
-        
-        st.write("📸 **Foto Profilo** (Opzionale)")
-        metodo_foto = st.radio("Come vuoi caricare la foto?", ["Carica dalla Galleria", "Scatta una foto ora"])
-        if metodo_foto == "Carica dalla Galleria":
-            foto_profilo = st.file_uploader("Scegli un'immagine", type=['jpg', 'jpeg', 'png'])
-        else:
-            foto_profilo = st.camera_input("Scatta una foto con la fotocamera")
             
         if st.button("Crea Account"):
             if reg_user and reg_pass:
@@ -384,7 +377,7 @@ else:
         st.markdown(st.session_state['scheda_generata'])
         
         st.markdown("---")
-        st.subheader("📄 Scarica la tua Scheda Ufficiale in PDF")
+        st.subheader("📄 Scarica la tua Scheda Ufficial in PDF")
         
         # Generazione PDF
         nome_file = st.session_state['nome_atleta_scheda'] if st.session_state['nome_atleta_scheda'] else st.session_state['username']
