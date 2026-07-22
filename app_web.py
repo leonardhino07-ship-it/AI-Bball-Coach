@@ -6,7 +6,7 @@ from youtubesearchpython import VideosSearch
 st.set_page_config(page_title="AI Basketball Coach PRO", page_icon="🏀", layout="wide")
 
 st.title("🏀 AI Basketball Coach PRO")
-st.write("Programmazione settimanale bilanciata con link YouTube HTML garantiti e pari dettaglio per ogni giorno.")
+st.write("Programmazione settimanale bilanciata con link YouTube DIRETTI e REALI (Nessun video inventato).")
 
 # Controllo della chiave API nei Secrets
 if "GROQ_API_KEY" in st.secrets:
@@ -17,8 +17,8 @@ else:
 
 client = Groq(api_key=groq_api_key)
 
-# MOTORE YOUTUBE CON GENERAZIONE DI LINK HTML ESTERNI (target="_blank")
-def cerca_video_drills_html(giocatori, obiettivo):
+# MOTORE YOUTUBE: ESTRAE SOLO LINK PURI E REALI
+def cerca_video_drills_raw(giocatori, obiettivo):
     db_video_text = ""
     queries = []
     
@@ -29,32 +29,26 @@ def cerca_video_drills_html(giocatori, obiettivo):
         queries.append(f"{g} footwork breakdown")
 
     if obiettivo:
-        queries.append(f"basketball {obiettivo} drill breakdown tutorial")
+        queries.append(f"basketball {obiettivo} drill tutorial")
 
-    for q in queries[:5]:
+    for q in queries[:4]: # Limite a 4 query per non rallentare troppo
         try:
             search = VideosSearch(q, limit=2)
             results = search.result().get('result', [])
             for vid in results:
                 v_id = vid.get('id')
-                title = vid.get('title', 'Tutorial Esercizio').replace('[', '').replace(']', '').replace('"', "'")
+                title = vid.get('title', 'Tutorial Esercizio')
                 if v_id:
-                    # Garantiamo il prefisso https:// completo e l'apertura in nuova scheda
                     clean_url = f"https://www.youtube.com/watch?v={v_id}"
-                    thumb_url = f"https://img.youtube.com/vi/{v_id}/hqdefault.jpg"
-                    
-                    # Codice HTML bloccato per evitare errori di reindirizzamento
-                    html_block = f'<a href="{clean_url}" target="_blank" style="text-decoration:none;"><img src="{thumb_url}" width="260" style="border-radius:8px;"><br>👉 <b>Guarda su YouTube: {title}</b></a>'
                     
                     db_video_text += f"""
-- DRILL VIDEO: "{title}"
-  URL_BASE: {clean_url}
-  CODICE_HTML_DA_INCOLLARE: {html_block}
+- TITOLO VIDEO: "{title}"
+  LINK ESATTO DA COPIARE: {clean_url}
 """
         except Exception:
             pass
 
-    return db_video_text if db_video_text else "Nessun video trovato."
+    return db_video_text if db_video_text else "NESSUN VIDEO TROVATO. NON INSERIRE ALCUN LINK YOUTUBE."
 
 
 # INTERFACCIA UTENTE
@@ -72,24 +66,24 @@ with st.form("coach_form"):
     with col2:
         obiettivo = st.text_input("Obiettivo preciso (es. primo passo esplosivo, handles/palleggio, tiro dal palleggio)")
         frequenza = st.selectbox("Frequenza settimanale", ["1-2 volte", "3-4 volte", "5+ volte"])
-        durata_singola = st.radio("Durata esatta singola sessione:", ["30 minuti", "1 ora", "1 ora e 30", "2 ore", "2 ore e 30", "3 ore"])
+        durata_singola = st.radio("Durata esatta singola sessione:", ["30 minuti", "1 ora", "1 ora e 30", "2 ore", "2 ore e 30", "3 video"])
         logistica = st.radio("Logistica di allenamento:", ["Da solo", "In compagnia"])
 
     st.subheader("Film Study & Giocatori Modello")
     giocatori_simili = st.text_input("A chi ti ispiri? (Separa con virgola. Es: Stephen Curry, Tyrese Maxey, Kyrie Irving)")
     note_extra = st.text_area("Note (es. infortuni, attrezzi a disposizione come coni, pallina da tennis, spara-palloni)")
     
-    submit_button = st.form_submit_button(label="Genera Programmazione Settimanale")
+    submit_button = st.form_submit_button(label="Genera Programmazione Settimanale Sicura")
 
 # ELABORAZIONE
 if submit_button:
-    with st.spinner("Scansione database YouTube per trovare i singoli drill dei campioni..."):
-        database_video_reali = cerca_video_drills_html(giocatori_simili, obiettivo)
+    with st.spinner("Estrazione dei link YouTube diretti in corso..."):
+        database_video_reali = cerca_video_drills_raw(giocatori_simili, obiettivo)
 
     with st.spinner("L'IA sta costruendo la scheda garantendo pari dettaglio per OGNI giorno..."):
         prompt = f"""
         Sei un MENTORE E PREPARATORE ATLETICO NBA di livello mondiale.
-        Il tuo compito è creare un PROGRAMMA DI ALLENAMENTO SETTIMANALE iper-dettagliato, senza alcuna vaghezza e mantenendo la STESSA identica cura dal primo all'ultimo giorno.
+        Il tuo compito è creare un PROGRAMMA DI ALLENAMENTO SETTIMANALE iper-dettagliato.
 
         DATI UTENTE TASSATIVI:
         - Nome: {nome} | Età: {eta} | Ruolo: {ruolo} | Livello: {livello}
@@ -100,44 +94,42 @@ if submit_button:
         - GIOCATORI MODELLO: {giocatori_simili}
         - NOTE/ATTREZZATURA: {note_extra}
 
-        DATABASE VIDEO HTML REALI DA INCOLLARE:
+        DATABASE LINK YOUTUBE (REALI E VERIFICATI):
         {database_video_reali}
 
-        REGOLE FERREE ED INDISPENSIBILI:
+        REGOLE FERREE ED INDISPENSIBILI (PENA IL FALLIMENTO DELL'ALLENAMENTO):
 
-        1. REGOLA DI UNIFORMITÀ DEI GIORNI (TASSATIVO):
-           In base alla frequenza scelta ({frequenza}), devi creare tutti i giorni previsti (es. "### GIORNO 1", "### GIORNO 2", "### GIORNO 3", "### GIORNO 4").
-           È SEVERAMENTE VIETATO ridurre la qualità o il numero di esercizi dal Giorno 2 in poi. Ogni singolo giorno deve contenere la stessa quantità di dettagli, serie, ripetizioni, spiegazione biomeccanica dei piedi e video tutorial. Non scrivere mai frasi come "ripeti il giorno 1" o "fai esercizi simili".
+        1. DIVIETO ASSOLUTO DI INVENTARE LINK (ANTI-HALLUCINATION):
+           È SEVERAMENTE VIETATO inventare link YouTube. 
+           È SEVERAMENTE VIETATO utilizzare l'ID "dQw4w9WgXcQ" (Rickroll) o qualsiasi altro link non presente nel DATABASE qui sopra.
+           Se per un esercizio ritieni utile un video, devi prendere ESATTAMENTE il "LINK ESATTO DA COPIARE" dal database e scriverlo in modo semplice, così:
+           👉 **Video di riferimento:** https://www.youtube.com/watch?v=...
+           Se non hai un video pertinente nel database per un esercizio, NON inserire alcun link.
 
-        2. RISPETTO RIGIDO DEL TEMPO ({durata_singola}):
-           Ogni singolo giorno deve essere strutturato per coprire la durata totale di {durata_singola}:
-           - Riscaldamento/Attivazione
-           - Blocco Tecnica & Signature Drills ({giocatori_simili})
-           - Blocco Applicazione & Tiro/Situazionale
-           - Defaticamento
+        2. REGOLA DI UNIFORMITÀ DEI GIORNI (TASSATIVO):
+           In base alla frequenza scelta ({frequenza}), devi creare tutti i giorni previsti (es. "### GIORNO 1", "### GIORNO 2", "### GIORNO 3").
+           È SEVERAMENTE VIETATO ridurre la qualità o il numero di esercizi dal Giorno 2 in poi. Ogni singolo giorno deve contenere la stessa quantità di dettagli, serie, ripetizioni e spiegazione biomeccanica dei piedi. 
+
+        3. RISPETTO RIGIDO DEL TEMPO ({durata_singola}):
+           Ogni singolo giorno deve essere strutturato per coprire la durata totale di {durata_singola}.
            Tutti gli esercizi di TUTTI i giorni devono avere indicati: [Durata in min | Serie | Ripetizioni | Recupero].
-
-        3. LINK E VIDEO GARANTITI (HTML):
-           Sotto ogni esercizio principale, per mostrare il video, DEVI incollare l'esatto codice fornito sotto la voce "CODICE_HTML_DA_INCOLLARE" del database. Se vuoi specificare un minutaggio (timestamp), aggiungi sotto una riga in questo modo:
-           👉 <a href="URL_BASE&t=SECONDI" target="_blank"><b>Guarda l'esercizio dal minuto X:XX su YouTube</b></a>
-           Nessun link deve rimanere privo del prefisso https:// e dell'attributo target="_blank".
         """
 
         try:
             chat_completion = client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
                 messages=[
-                    {"role": "system", "content": "Sei un Master Coach NBA. Mantieni un livello di dettaglio maniacale e identico per tutti i giorni della scheda. Usi solo tag HTML con target='_blank' per i link."},
+                    {"role": "system", "content": "Sei un Master Coach NBA. Inserisci solo link in puro testo (https://...) tratti unicamente dal database fornito. Non inventi mai link YouTube."},
                     {"role": "user", "content": prompt}
                 ],
-                temperature=0.2, # Temperatura ancora più bassa per forzare il rispetto maniacale della struttura e non 'stancarsi' nei giorni successivi
+                temperature=0.2, 
                 max_tokens=4500
             )
             
             scheda = chat_completion.choices[0].message.content
-            st.success("Programmazione Settimanale Uniforme e Completa generata!")
+            st.success("Programmazione Settimanale Uniforme generata!")
             st.markdown("---")
-            st.markdown(scheda, unsafe_allow_html=True)
+            st.markdown(scheda)
             
         except Exception as e:
             st.error(f"Errore durante la generazione della scheda: {e}")
