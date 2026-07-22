@@ -2,3 +2,4 @@ streamlit
 groq
 duckduckgo-search
 youtube-search-python
+reportlab
