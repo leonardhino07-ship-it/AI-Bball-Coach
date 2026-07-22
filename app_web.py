@@ -3,6 +3,13 @@ from groq import Groq
 from youtubesearchpython import VideosSearch
 import sqlite3
 import hashlib
+import io
+import re
+import html
+from reportlab.lib.pagesizes import A4
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, HRFlowable
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
 
 # Configurazione della pagina
 st.set_page_config(page_title="AI Basketball Coach PRO", page_icon="🏀", layout="wide")
@@ -64,9 +71,111 @@ if 'username' not in st.session_state:
     st.session_state['username'] = ''
 if 'giocatori_memoria' not in st.session_state:
     st.session_state['giocatori_memoria'] = ''
+if 'scheda_generata' not in st.session_state:
+    st.session_state['scheda_generata'] = ''
+if 'nome_atleta_scheda' not in st.session_state:
+    st.session_state['nome_atleta_scheda'] = ''
 
 # ==========================================
-# 2. SCHERMATA DI LOGIN / REGISTRAZIONE
+# 2. FUNZIONE GENERAZIONE PDF
+# ==========================================
+def pulisci_e_formatta_testo_pdf(testo):
+    # Rimuove emoji incompatibili coi font PDF standard
+    testo_pulito = re.sub(r'[^\x00-\x7F\u00C0-\u024F\u1E00-\u1EFF\s\.,;:!\?\-\(\)\[\]"\'/%\&\=\_\#\+]', '', testo)
+    # Protegge caratteri speciali XML
+    testo_escaped = html.escape(testo_pulito)
+    # Converte il grassetto e corsivo Markdown per ReportLab
+    testo_formatted = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', testo_escaped)
+    testo_formatted = re.sub(r'\*(.*?)\*', r'<i>\1</i>', testo_formatted)
+    return testo_formatted
+
+def genera_pdf_scheda(testo_scheda, nome_utente):
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        rightMargin=36,
+        leftMargin=36,
+        topMargin=36,
+        bottomMargin=36
+    )
+    
+    styles = getSampleStyleSheet()
+    
+    title_style = ParagraphStyle(
+        'DocTitle',
+        parent=styles['Heading1'],
+        fontSize=18,
+        leading=22,
+        textColor=colors.HexColor('#1E3A8A'),
+        spaceAfter=10
+    )
+    
+    h2_style = ParagraphStyle(
+        'SectionH2',
+        parent=styles['Heading2'],
+        fontSize=14,
+        leading=18,
+        textColor=colors.HexColor('#1E3A8A'),
+        spaceBefore=12,
+        spaceAfter=6
+    )
+
+    h3_style = ParagraphStyle(
+        'SectionH3',
+        parent=styles['Heading3'],
+        fontSize=12,
+        leading=16,
+        textColor=colors.HexColor('#2563EB'),
+        spaceBefore=10,
+        spaceAfter=4
+    )
+    
+    body_style = ParagraphStyle(
+        'BodyTextCustom',
+        parent=styles['Normal'],
+        fontSize=10,
+        leading=14,
+        textColor=colors.HexColor('#1F2937'),
+        spaceAfter=4
+    )
+
+    story = []
+    
+    # Intestazione Documento PDF
+    story.append(Paragraph("<b>AI BASKETBALL COACH PRO - SCHEDA UFFICIALE</b>", title_style))
+    story.append(Paragraph(f"<b>Atleta:</b> {html.escape(nome_utente)}", body_style))
+    story.append(HRFlowable(width="100%", thickness=1.5, color=colors.HexColor('#1E3A8A'), spaceBefore=6, spaceAfter=12))
+    
+    # Processa il testo riga per riga
+    righe = testo_scheda.split('\n')
+    for riga in righe:
+        riga_str = riga.strip()
+        if not riga_str:
+            story.append(Spacer(1, 4))
+            continue
+            
+        if riga_str.startswith('### '):
+            testo_f = pulisci_e_formatta_testo_pdf(riga_str.replace('### ', ''))
+            story.append(Paragraph(testo_f, h3_style))
+        elif riga_str.startswith('## '):
+            testo_f = pulisci_e_formatta_testo_pdf(riga_str.replace('## ', ''))
+            story.append(Paragraph(testo_f, h2_style))
+        elif riga_str.startswith('# '):
+            testo_f = pulisci_e_formatta_testo_pdf(riga_str.replace('# ', ''))
+            story.append(Paragraph(testo_f, title_style))
+        elif riga_str.startswith('---'):
+            story.append(HRFlowable(width="100%", thickness=0.5, color=colors.gray, spaceBefore=6, spaceAfter=6))
+        else:
+            testo_f = pulisci_e_formatta_testo_pdf(riga_str)
+            story.append(Paragraph(testo_f, body_style))
+            
+    doc.build(story)
+    buffer.seek(0)
+    return buffer
+
+# ==========================================
+# 3. SCHERMATA DI LOGIN / REGISTRAZIONE
 # ==========================================
 if not st.session_state['logged_in']:
     st.title("🏀 Benvenuto in AI Basketball Coach PRO")
@@ -116,7 +225,7 @@ if not st.session_state['logged_in']:
                 st.warning("Inserisci Username e Password validi.")
 
 # ==========================================
-# 3. APP PRINCIPALE (Accessibile solo se loggati)
+# 4. APP PRINCIPALE (Accessibile solo se loggati)
 # ==========================================
 else:
     col_head1, col_head2 = st.columns([4, 1])
@@ -125,6 +234,7 @@ else:
     with col_head2:
         if st.button("🚪 Logout"):
             st.session_state['logged_in'] = False
+            st.session_state['scheda_generata'] = ''
             st.rerun()
 
     st.write("Programmazione settimanale Elite con calcolo rigoroso del volume e link video YouTube verificati.")
@@ -205,6 +315,7 @@ else:
     if submit_button:
         aggiorna_memoria_giocatori(st.session_state['username'], giocatori_simili)
         st.session_state['giocatori_memoria'] = giocatori_simili
+        st.session_state['nome_atleta_scheda'] = nome
 
         with st.spinner("Ricerca ed analisi dei video più popolari di basket su YouTube in corso..."):
             risultati_youtube = cerca_video_youtube_dettagliati(giocatori_simili, obiettivo)
@@ -259,9 +370,29 @@ else:
                 )
                 
                 scheda = chat_completion.choices[0].message.content
-                st.success("Programmazione Settimanale Elite generata con successo!")
-                st.markdown("---")
-                st.markdown(scheda)
+                st.session_state['scheda_generata'] = scheda
                 
             except Exception as e:
                 st.error(f"Si è verificato un errore: {e}")
+
+    # ==========================================
+    # 5. VISUALIZZAZIONE SCHEDA E DOWNLOAD PDF
+    # ==========================================
+    if st.session_state['scheda_generata']:
+        st.success("Programmazione Settimanale Elite generata con successo!")
+        st.markdown("---")
+        st.markdown(st.session_state['scheda_generata'])
+        
+        st.markdown("---")
+        st.subheader("📄 Scarica la tua Scheda Ufficiale in PDF")
+        
+        # Generazione PDF
+        nome_file = st.session_state['nome_atleta_scheda'] if st.session_state['nome_atleta_scheda'] else st.session_state['username']
+        pdf_bytes = genera_pdf_scheda(st.session_state['scheda_generata'], nome_file)
+        
+        st.download_button(
+            label="📥 Scarica Scheda in PDF",
+            data=pdf_bytes,
+            file_name=f"Scheda_Basketball_{nome_file.replace(' ', '_')}.pdf",
+            mime="application/pdf"
+        )
