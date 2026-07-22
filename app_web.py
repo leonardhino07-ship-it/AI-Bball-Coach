@@ -127,7 +127,7 @@ else:
             st.session_state['logged_in'] = False
             st.rerun()
 
-    st.write("Programmazione settimanale Elite con analisi biomeccanica, motivazione della scelta e video di riferimento YouTube.")
+    st.write("Programmazione settimanale Elite con calcolo rigoroso del volume e link video YouTube verificati.")
 
     if "GROQ_API_KEY" in st.secrets:
         groq_api_key = st.secrets["GROQ_API_KEY"]
@@ -137,7 +137,7 @@ else:
 
     client = Groq(api_key=groq_api_key)
 
-    # RICERCA YOUTUBE RIGIDA ESCLUSIVAMENTE PER IL BASKET
+    # RICERCA YOUTUBE RIGIDA CON FILTRO DI VALIDITÀ VIDEO
     def cerca_video_youtube_dettagliati(giocatori, obiettivo):
         video_found = []
         queries = []
@@ -145,13 +145,10 @@ else:
         lista_g = [g.strip() for g in giocatori.split(',') if g.strip()]
         
         for g in lista_g:
-            queries.append(f"{g} basketball drill tutorial")
-            queries.append(f"{g} basketball workout breakdown")
+            queries.append(f"{g} basketball drill breakdown")
+            queries.append(f"{g} basketball workout tutorial")
 
         if obiettivo:
-            queries.append(f"best basketball {obiettivo} drill workout tutorial")
-
-        if not queries:
             queries.append(f"best basketball {obiettivo} drill tutorial")
 
         for q in queries[:4]:
@@ -160,11 +157,12 @@ else:
                 results = search.result().get('result', [])
                 for vid in results:
                     v_id = vid.get('id')
+                    v_type = vid.get('type', 'video')
                     title = vid.get('title', 'Tutorial Esercizio Basketball')
                     views = vid.get('viewCount', {}).get('text', 'Molte visualizzazioni') if isinstance(vid.get('viewCount'), dict) else "Molte visualizzazioni"
                     
-                    # FILTRO TASSATIVO ANTI-RICKROLL E ANTI-LINK ERRATI
-                    if v_id and v_id != "dQw4w9WgXcQ":
+                    # ACCETTA ESCLUSIVAMENTE VIDEO SINGOLI REALI E FUNZIONANTI (NO PLAYLIST, NO CANALI, NO RICKROLL)
+                    if v_id and v_type == 'video' and v_id != "dQw4w9WgXcQ":
                         clean_url = f"https://www.youtube.com/watch?v={v_id}"
                         video_found.append({
                             "title": title,
@@ -175,11 +173,11 @@ else:
                 pass
 
         if not video_found:
-            return "NESSUN VIDEO TROVATO. NON INSERIRE ALCUN LINK YOUTUBE IN NESSUN ESERCIZIO."
+            return "NESSUN VIDEO DISPONIBILE. OMETTI LA RIGA DEI VIDEO SE NON PERTINENTE."
 
-        formatted_text = "ELENCO VIDEO ESCLUSIVAMENTE DI BASKET TROVATI SU YOUTUBE (USA SOLO QUESTI URL SENZA MODIFICARLI):\n"
+        formatted_text = "ELENCO VIDEO DISPONIBILI SU YOUTUBE (UTILIZZA SOLO QUESTI URL SENZA MODIFICARLI):\n"
         for idx, v in enumerate(video_found, 1):
-            formatted_text += f"{idx}. TITOLO: \"{v['title']}\" | VISUALIZZAZIONI: {v['views']} | URL ESATTO: {v['url']}\n"
+            formatted_text += f"{idx}. TITOLO: \"{v['title']}\" | VISUALIZZAZIONI: {v['views']} | URL: {v['url']}\n"
 
         return formatted_text
 
@@ -213,52 +211,57 @@ else:
         with st.spinner("Ricerca ed analisi dei video più popolari di basket su YouTube in corso..."):
             risultati_youtube = cerca_video_youtube_dettagliati(giocatori_simili, obiettivo)
 
-        with st.spinner("L'IA sta elaborando la scheda iper-dettagliata basata sui video analizzati..."):
+        with st.spinner("L'IA sta costruendo la scheda leggendo TUTTI i parametri inseriti..."):
             prompt = f"""
             Sei un MASTER COACH E PREPARATORE ATLETICO NBA DI LIVELLO MONDIALE.
-            Crea un programma di allenamento settimanale con esercizi 'BEST OF THE BEST', ultra-dettagliati e basati unicamente su drill reali di pallacanestro.
+            Il tuo compito è analizzare TUTTI I DATI INSERITI DALL'UTENTE e costruire un programma settimanale impeccabile, sia nella calibrazione del tempo che nel livello di dettaglio.
 
-            DATI UTENTE:
+            DATI UTENTE TASSATIVI DA INCLUDERE NELLA SCHEDA:
             - Nome: {nome} | Età: {eta} | Ruolo: {ruolo} | Livello: {livello}
             - OBIETTIVO PRINCIPALE: {obiettivo}
             - FREQUENZA SETTIMANALE: {frequenza}
-            - DURATA SINGOLA SESSIONE: {durata_singola}
-            - LOGISTICA: {logistica} (Se 'Da solo', escludi passaggi e difensori reali)
+            - DURATA SINGOLA SESSIONE: {durata_singola}  <-- REGOLA DI VOLUME FONDAMENTALE!
+            - LOGISTICA: {logistica} (Se 'Da solo', VIETATI passaggi e difensori reali)
             - GIOCATORI MODELLO: {giocatori_simili}
             - NOTE/ATTREZZI: {note_extra}
 
-            RISULTATI RICERCA YOUTUBE (EXCLUSIVAMENTE VIDEO BASKET):
+            DATABASE VIDEO YOUTUBE VERIFICATI:
             {risultati_youtube}
 
-            REGOLE RIGIDE ED INDISPENSIBILI PER OGNI SINGOLO ESERCIZIO:
+            REGOLE FERREE ED INDISPENSIBILI:
 
-            1. STRUTTURA TASSATIVA PER TUTTI GLI ESERCIZIO:
-               Per OGNI esercizio proposto in TUTTI i giorni della scheda, devi includere TASSATIVAMENTE i seguenti campi:
-               - **Nome Esercizio:** [Nome evocativo e professionale del drill]
-               - **Serie (Sets):** [Numero esatto]
-               - **Ripetizioni / Durata:** [Ripetizioni per lato o tempo esatto]
-               - **Recupero tra le serie:** [Tempo di riposo esatto]
-               - **🎯 Cosa allena nello specifico:** [Spiega dettagliatamente quale gesto tecnico di basket, qualità motoria o abilità biomeccanica sviluppa questo esercizio]
-               - **⭐ Perché è stato scelto ("Best of the Best"):** [Spiega la motivazione tecnica per cui questo specifico drill è tra i migliori in assoluto per raggiungere l'obiettivo ({obiettivo}) e come si collega alle caratteristiche dei campioni ({giocatori_simili})]
-               - **⚙️ Spiegazione Biomeccanica e Tecnica:** [Dettaglio maniacale su postura, angoli delle ginocchia, lavoro di piedi (footwork), gestione del baricentro e stabilità della palla]
-               - **🎥 Video di riferimento:** [Usa SOLO ed ESCLUSIVAMENTE gli URL del database fornito qui sopra. Indica il minutaggio esatto del drill, es: https://www.youtube.com/watch?v=...&t=45s (Guarda dal minuto 0:45)]
+            1. CALCOLO TASSATIVO DEL VOLUME IN BASE ALLA DURATA ({durata_singola}):
+               È SEVERAMENTE VIETATO generare solo 2 o 3 esercizi se la durata è di 1 ora o più!
+               Devi riempire l'intero minutaggio di {durata_singola} seguendo questa tabella rigida di esercizi PER OGNI GIORNO:
+               - Se "1 ora" (60 min): inserisci 4-5 esercizi totali.
+               - Se "1 ora e 30" (90 min): inserisci 6-7 esercizi totali.
+               - Se "2 ore" (120 min) o più: INSERISCI ALMENO 7-9 ESERCIZI DISTINTI divisi in:
+                 * Riscaldamento / Attivazione (15 min - 2 esercizi)
+                 * Blocco 1: Tecnica & Signature Drills da {giocatori_simili} (45 min - 3 esercizi)
+                 * Blocco 2: Applicazione ad alta intensità / Tiro / Situazionale per {obiettivo} (45 min - 3 esercizi)
+                 * Defaticamento & Mobilità (15 min - 1 esercizio)
 
-            2. DIVIETO ABSOLUTO DI LINK FINTI / NON DI BASKET:
-               - È SEVERAMENTE VIETATO inventare link o utilizzare l'ID 'dQw4w9WgXcQ' o link non correlati al basket.
-               - Copia ESCLUSIVAMENTE gli URL esatti presenti nel blocco 'RISULTATI RICERCA YOUTUBE'.
-               - Se per un esercizio non è presente un video pertinente nella lista, OMETTI del tutto la riga del video senza inventare nulla.
+            2. STRUTTURA TASSATIVA PER OGNI ESERCIZIO:
+               Tutti gli esercizi di TUTTI i giorni devono includere esattamente questi 7 campi:
+               - **Nome Esercizio:** [Nome evocativo e professionale]
+               - **Durata stimata & Serie:** [es. 12 minuti | 4 Serie | 10 Ripetizioni per lato | Recupero 60 sec]
+               - **🎯 Cosa allena nello specifico:** [Dettaglia il gesto tecnico/motorio esatto]
+               - **⭐ Perché è stato scelto ("Best of the Best"):** [Spiega la motivazione tecnica in relazione a {obiettivo} e {giocatori_simili}]
+               - **⚙️ Spiegazione Biomeccanica e Tecnica:** [Dettaglio su postura, piedi, baricentro e palla]
+               - **🎥 Video di riferimento:** [Incolla l'URL esatto dal database e aggiungi il minutaggio. Es: https://www.youtube.com/watch?v=ID_VIDEO&t=90s (Guarda dal minuto 1:30)]
 
-            3. UNIFORMITÀ E RISPETTO DEL TEMPO ({durata_singola}):
-               - Dividi la scheda in sezioni per ogni giorno ("### GIORNO 1", "### GIORNO 2", ecc.).
-               - Mantieni lo STESSO IDENTICO livello di dettaglio approfondito in TUTTI i giorni previsti.
-               - Rispetta scrupolosamente la durata totale di {durata_singola} inserendo il giusto numero di esercizi per coprire l'intera sessione.
+            3. RISPETTO TOTALE DI OGNI PARAMETRO UTENTE:
+               La scheda deve fare esplicito riferimento all'età ({eta}), al ruolo ({ruolo}) e alla logistica ({logistica}). Se si allena da solo, adatta l'esercizio in modo che possa farlo in autonomia.
+
+            4. UNIFORMITÀ DEI GIORNI:
+               Crea tutte le sezioni dei giorni ("### GIORNO 1", "### GIORNO 2", ecc.) previste dalla frequenza ({frequenza}). Il Giorno 2, 3 e successivi DEVONO contenere lo STESSO IDENTICO livello di dettaglio e numero di esercizi del Giorno 1.
             """
 
             try:
                 chat_completion = client.chat.completions.create(
                     model="llama-3.3-70b-versatile",
                     messages=[
-                        {"role": "system", "content": "Sei un Master Coach NBA implacabile sul dettaglio. Per ogni esercizio spieghi esattamente COSA allena e PERCHÉ è stato scelto tra i migliori. Usi solo video reali di basket e minutaggi precisi."},
+                        {"role": "system", "content": "Sei un Master Coach NBA. Rispetti al 100% il minutaggio della sessione, creando il numero corretto di esercizi (almeno 7-9 esercizi per 2 ore). Usi solo link video funzionanti e leggi tutti i parametri dell'utente."},
                         {"role": "user", "content": prompt}
                     ],
                     temperature=0.2,
