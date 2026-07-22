@@ -3,10 +3,10 @@ from groq import Groq
 from youtubesearchpython import VideosSearch
 
 # Configurazione della pagina
-st.set_page_config(page_title="AI Basketball Coach", page_icon="🏀", layout="centered")
+st.set_page_config(page_title="AI Basketball Coach PRO", page_icon="🏀", layout="wide")
 
 st.title("🏀 AI Basketball Coach PRO")
-st.write("Schede di allenamento iper-dettagliate con analisi dei movimenti e integrazione video.")
+st.write("Generatore di schede settimanali con Video Tutorial Reali integrati.")
 
 # Controllo della chiave API nei Secrets
 if "GROQ_API_KEY" in st.secrets:
@@ -17,36 +17,45 @@ else:
 
 client = Groq(api_key=groq_api_key)
 
-# FUNZIONE MOTORE DI RICERCA YOUTUBE OTTIMIZZATA
-def cerca_migliori_video_youtube(giocatori):
-    risultati_totali = ""
-    lista_giocatori = [g.strip() for g in giocatori.split(',') if g.strip()]
+# FUNZIONE DI RICERCA YOUTUBE POTENZIATA (Estrae Link e Copertine/Thumbnails)
+def genera_database_video(giocatori, obiettivo):
+    db_video = ""
     
-    if not lista_giocatori:
-        return "Nessun giocatore inserito."
-
-    for giocatore in lista_giocatori:
+    # 1. Ricerca mirata sull'obiettivo dell'utente
+    if obiettivo:
         try:
-            # Ricerca semplificata per garantire sempre risultati (sia per star che per role player)
-            query = f"{giocatore} basketball workout highlights skills"
-            search = VideosSearch(query, limit=10)
-            videos = search.result()['result']
-            
-            # Filtro base per prendere i 2 video più rilevanti
-            risultati_totali += f"\n--- VIDEO STUDIO PER: {giocatore.upper()} ---\n"
-            for vid in videos[:2]:
-                titolo = vid.get('title', 'Titolo Sconosciuto')
-                link = vid.get('link', '#')
-                risultati_totali += f"- [{titolo}]({link})\n"
+            search_obj = VideosSearch(f"basketball {obiettivo} drills tutorial", limit=5)
+            for vid in search_obj.result()['result']:
+                titolo = vid.get('title', 'Tutorial').replace('[', '').replace(']', '')
+                link = vid.get('link', '')
+                # Prende l'URL della copertina del video pulendo i parametri extra
+                thumb = vid.get('thumbnails', [{}])[0].get('url', '').split('?')[0] 
+                if link and thumb:
+                    db_video += f"\n- TITOLO: {titolo}\n  CODICE DA INCOLLARE: [![{titolo}]({thumb})]({link})\n"
         except Exception as e:
-            risultati_totali += f"- Impossibile estrarre link diretti per {giocatore}. L'IA suggerirà le parole chiave esatte per la ricerca.\n"
+            pass
             
-    return risultati_totali
+    # 2. Ricerca mirata sui giocatori scelti
+    if giocatori:
+        lista_g = [g.strip() for g in giocatori.split(',') if g.strip()]
+        for g in lista_g:
+            try:
+                search_g = VideosSearch(f"{g} basketball workout drills", limit=3)
+                for vid in search_g.result()['result']:
+                    titolo = vid.get('title', f'Video su {g}').replace('[', '').replace(']', '')
+                    link = vid.get('link', '')
+                    thumb = vid.get('thumbnails', [{}])[0].get('url', '').split('?')[0]
+                    if link and thumb:
+                        db_video += f"\n- TITOLO: {titolo}\n  CODICE DA INCOLLARE: [![{titolo}]({thumb})]({link})\n"
+            except Exception as e:
+                pass
+                
+    return db_video if db_video else "Nessun video specifico trovato."
 
 
 # INTERFACCIA UTENTE
 with st.form("coach_form"):
-    st.subheader("Profilo del Giocatore e Parametri (Compila con cura)")
+    st.subheader("Parametri di Allenamento")
     
     col1, col2 = st.columns(2)
     
@@ -57,68 +66,62 @@ with st.form("coach_form"):
         livello = st.selectbox("Livello di gioco", ["Principiante", "Intermedio", "Avanzato", "Professionista"])
     
     with col2:
-        obiettivo = st.text_input("Obiettivo preciso (es. palleggio arresto e tiro, floater, difesa sull'uomo)")
+        obiettivo = st.text_input("Obiettivo preciso (es. tiro dal palleggio, footwork, difesa)")
         frequenza = st.selectbox("Frequenza settimanale", ["1-2 volte", "3-4 volte", "5+ volte"])
-        durata_singola = st.radio("Durata esatta sessione:", ["30 minuti", "1 ora", "1 ora e 30", "2 ore", "2 ore e 30", "3 ore"])
+        durata_singola = st.radio("Durata esatta singola sessione:", ["30 minuti", "1 ora", "1 ora e 30", "2 ore", "2 ore e 30", "3 ore"])
         logistica = st.radio("Logistica di allenamento:", ["Da solo", "In compagnia"])
 
     st.subheader("Film Study (Studio dei Giocatori)")
-    giocatori_simili = st.text_input("Giocatori di riferimento (Separa con virgola. Es: Jalen Brunson, Austin Reaves, Facundo Campazzo)")
-    note_extra = st.text_area("Note (es. infortuni, attrezzi a disposizione come coni, palla medica, spara-palloni)")
+    giocatori_simili = st.text_input("Giocatori di riferimento (es: Kyrie Irving, Luka Doncic)")
+    note_extra = st.text_area("Note (es. infortuni, attrezzi a disposizione)")
     
-    submit_button = st.form_submit_button(label="Genera Scheda Professionale Avanzata")
+    submit_button = st.form_submit_button(label="Genera Scheda Settimanale Completa")
 
 # ELABORAZIONE
 if submit_button:
-    with st.spinner("Ricerca dei video di riferimento in corso..."):
-        video_trovati = cerca_migliori_video_youtube(giocatori_simili)
+    with st.spinner("Scansione di YouTube per estrarre le copertine dei video reali..."):
+        database_video_reali = genera_database_video(giocatori_simili, obiettivo)
 
-    with st.spinner("L'IA sta assemblando gli esercizi al dettaglio. Nessuna indicazione vaga consentita..."):
+    with st.spinner("Creazione della programmazione settimanale in corso..."):
         prompt = f"""
-        Sei un preparatore atletico NBA ed un allenatore di pallacanestro di altissimo livello.
-        Il tuo compito è creare una scheda di allenamento ESTREMAMENTE PRECISA, TECNICA e DETTAGLIATA.
-        VIETATO ESSERE VAGHI. Non scrivere mai frasi generiche come "fai un po' di palleggio" o "esercitati al tiro".
-        Devi fornire esercizi specifici, meccaniche di movimento, serie, ripetizioni e tempi di recupero.
-
-        DATI TASSATIVI DELL'UTENTE (Devi basare TUTTA la scheda su questi, senza ignorarne nessuno):
+        Sei un preparatore atletico NBA. Crea un PROGRAMMA DI ALLENAMENTO SETTIMANALE iper-dettagliato.
+        
+        DATI UTENTE TASSATIVI:
         - Nome: {nome} | Età: {eta} | Ruolo: {ruolo} | Livello: {livello}
         - Obiettivo Focus: {obiettivo}
-        - Durata Sessione: {durata_singola}
-        - Modalità (Logistica): {logistica}
-        - Giocatori Modello: {giocatori_simili}
-        - Note fisiche/attrezzatura: {note_extra}
+        - Frequenza Settimanale: {frequenza}
+        - Durata Singola Sessione: {durata_singola}
+        - Logistica: {logistica} (SE È "DA SOLO" NON INSERIRE PASSAGGI O DIFENSORI)
+        - Modelli: {giocatori_simili}
+        - Note: {note_extra}
 
-        VIDEO RECUPERATI DAL SISTEMA:
-        {video_trovati}
+        DATABASE VIDEO YOUTUBE REALI:
+        Qui sotto hai una lista di video reali appena trovati su YouTube. Sotto ad alcuni esercizi, DEVI copiare e incollare l'esatto "CODICE DA INCOLLARE" del video più pertinente. Questo mostrerà la copertina cliccabile all'utente.
+        {database_video_reali}
 
-        REGOLE FERREE PER LA CREAZIONE DELLA SCHEDA:
-        1. ADATTAMENTO LOGISTICO: Se l'utente ha scelto "Da solo", è SEVERAMENTE VIETATO inserire esercizi che richiedono passaggi da un compagno o difensori reali. Inventa auto-passaggi o uso di ostacoli/sedie. Se ha scelto "In compagnia", sfrutta i compagni per passaggi, letture e 1v1.
-        2. GESTIONE DEL TEMPO: La somma dei minuti di tutti gli esercizi deve coincidere esattamente con "{durata_singola}".
-        3. FILM STUDY PRATICO: Analizza i "Signature Moves" (mosse tipiche) dei giocatori modello ({giocatori_simili}) e inserisci esercizi SPECIFICI per replicare le loro meccaniche esatte.
-        4. FORMATO DI OGNI ESERCIZIO: Ogni singolo esercizio DEVE avere questa struttura:
-           - **Nome Esercizio** (es. Mikan Drill Inverso, Esitazione Drop e Tiro)
-           - **Durata/Serie/Ripetizioni**: (es. 3 Serie da 10 tiri segnati, recupero 45 sec)
-           - **Meccanica ed Esecuzione Dettagliata**: Spiega ESATTAMENTE come muovere i piedi, dove guardare, come posizionare il corpo.
-           - Se applicabile, inserisci il link YouTube fornito sopra o consiglia la ricerca esatta da fare su Google/YouTube (es. "Cerca: 'Jalen Brunson footwork drill'").
-
-        La scheda deve iniziare con un paragrafo intitolato "ANALISI DEL PROFILO" in cui confermi all'utente come hai strutturato il workout tenendo conto della durata, della logistica e del livello inseriti.
+        REGOLE FERREE:
+        1. STRUTTURA SETTIMANALE: Basandoti sulla "Frequenza Settimanale" ({frequenza}), dividi la scheda in giorni. Esempio: se è "3-4 volte", crea l'intestazione "### GIORNO 1", "### GIORNO 2", "### GIORNO 3".
+        2. DIVERSIFICAZIONE: Ogni giorno deve concentrarsi su una sfumatura diversa dell'obiettivo.
+        3. DURATA: Il volume di OGNI GIORNO deve coincidere con la "Durata Singola Sessione" ({durata_singola}).
+        4. DETTAGLIO ESERCIZI: Nessuna vaghezza. Indica Nome esercizio, Serie, Ripetizioni e Meccanica esatta (come muovere i piedi, dove guardare).
+        5. INSERIMENTO VIDEO: Dopo la spiegazione di un esercizio chiave, scrivi "**🎥 Guarda il video di riferimento:**" e poi incolla il codice del video preso dal DATABASE VIDEO fornito sopra. NON INVENTARE LINK.
         """
 
         try:
             chat_completion = client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
                 messages=[
-                    {"role": "system", "content": "Sei un allenatore di basket professionista, cinico e precisissimo. Rifiuti la vaghezza e fornisci solo dettagli tecnici di alto livello."},
+                    {"role": "system", "content": "Sei un coach rigoroso. Strutturi piani settimanali e usi SOLO i codici video forniti nel database."},
                     {"role": "user", "content": prompt}
                 ],
-                temperature=0.4, # Abbassata la temperatura per risposte più logiche, precise e meno creative/vaghe
-                max_tokens=4000
+                temperature=0.3, # Molto bassa per massima precisione e nessuna invenzione di link
+                max_tokens=4500
             )
             
             scheda = chat_completion.choices[0].message.content
-            st.success("Scheda professionale generata con successo!")
+            st.success("Programmazione Settimanale generata con successo!")
             st.markdown("---")
-            st.markdown(scheda)
+            st.markdown(scheda, unsafe_allow_html=True)
             
         except Exception as e:
             st.error(f"Errore durante la generazione della scheda: {e}")
