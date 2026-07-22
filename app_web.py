@@ -161,7 +161,6 @@ else:
                     title = vid.get('title', 'Tutorial Esercizio Basketball')
                     views = vid.get('viewCount', {}).get('text', 'Molte visualizzazioni') if isinstance(vid.get('viewCount'), dict) else "Molte visualizzazioni"
                     
-                    # ACCETTA ESCLUSIVAMENTE VIDEO SINGOLI REALI E FUNZIONANTI (NO PLAYLIST, NO CANALI, NO RICKROLL)
                     if v_id and v_type == 'video' and v_id != "dQw4w9WgXcQ":
                         clean_url = f"https://www.youtube.com/watch?v={v_id}"
                         video_found.append({
@@ -204,23 +203,22 @@ else:
         submit_button = st.form_submit_button(label="Genera Scheda di Allenamento Elite")
 
     if submit_button:
-        # Salva i giocatori preferiti nel profilo utente
         aggiorna_memoria_giocatori(st.session_state['username'], giocatori_simili)
         st.session_state['giocatori_memoria'] = giocatori_simili
 
         with st.spinner("Ricerca ed analisi dei video più popolari di basket su YouTube in corso..."):
             risultati_youtube = cerca_video_youtube_dettagliati(giocatori_simili, obiettivo)
 
-        with st.spinner("L'IA sta costruendo la scheda leggendo TUTTI i parametri inseriti..."):
+        with st.spinner("L'IA sta costruendo la scheda completa per TUTTI i giorni richiesti..."):
             prompt = f"""
             Sei un MASTER COACH E PREPARATORE ATLETICO NBA DI LIVELLO MONDIALE.
-            Il tuo compito è analizzare TUTTI I DATI INSERITI DALL'UTENTE e costruire un programma settimanale impeccabile, sia nella calibrazione del tempo che nel livello di dettaglio.
+            Il tuo compito è creare una programmazione settimanale completa, dove OGNI SINGOLO GIORNO ha lo STESSO IDENTICO livello di dettaglio profondo e rigoroso.
 
-            DATI UTENTE TASSATIVI DA INCLUDERE NELLA SCHEDA:
+            DATI UTENTE TASSATIVI DA APPLICARE:
             - Nome: {nome} | Età: {eta} | Ruolo: {ruolo} | Livello: {livello}
             - OBIETTIVO PRINCIPALE: {obiettivo}
-            - FREQUENZA SETTIMANALE: {frequenza}
-            - DURATA SINGOLA SESSIONE: {durata_singola}  <-- REGOLA DI VOLUME FONDAMENTALE!
+            - FREQUENZA SETTIMANALE: {frequenza}  <-- CREA TUTTI I GIORNI PREVISTI!
+            - DURATA SINGOLA SESSIONE: {durata_singola}
             - LOGISTICA: {logistica} (Se 'Da solo', VIETATI passaggi e difensori reali)
             - GIOCATORI MODELLO: {giocatori_simili}
             - NOTE/ATTREZZI: {note_extra}
@@ -228,44 +226,36 @@ else:
             DATABASE VIDEO YOUTUBE VERIFICATI:
             {risultati_youtube}
 
-            REGOLE FERREE ED INDISPENSIBILI:
+            REGOLE RIGIDISSIME SULLA COMPLETEZZA DEI GIORNI:
 
-            1. CALCOLO TASSATIVO DEL VOLUME IN BASE ALLA DURATA ({durata_singola}):
-               È SEVERAMENTE VIETATO generare solo 2 o 3 esercizi se la durata è di 1 ora o più!
-               Devi riempire l'intero minutaggio di {durata_singola} seguendo questa tabella rigida di esercizi PER OGNI GIORNO:
-               - Se "1 ora" (60 min): inserisci 4-5 esercizi totali.
-               - Se "1 ora e 30" (90 min): inserisci 6-7 esercizi totali.
-               - Se "2 ore" (120 min) o più: INSERISCI ALMENO 7-9 ESERCIZI DISTINTI divisi in:
-                 * Riscaldamento / Attivazione (15 min - 2 esercizi)
-                 * Blocco 1: Tecnica & Signature Drills da {giocatori_simili} (45 min - 3 esercizi)
-                 * Blocco 2: Applicazione ad alta intensità / Tiro / Situazionale per {obiettivo} (45 min - 3 esercizi)
-                 * Defaticamento & Mobilità (15 min - 1 esercizio)
+            1. PARITÀ ASSOLUTA TRA I GIORNI (TASSATIVO):
+               Sulla base della frequenza ({frequenza}), devi creare esplicitamente tutte le sezioni (es: "### GIORNO 1", "### GIORNO 2", "### GIORNO 3", "### GIORNO 4").
+               È SEVERAMENTE VIETATO ridurre i dettagli, riassumere o saltare i campi dal Giorno 2 in poi.
+               Il Giorno 2, il Giorno 3 e il Giorno 4 devono avere LA STESSA STRUTTURA E LO STESSO NUMERO DI ESERCIZI del Giorno 1. Non scrivere mai "ripeti il giorno 1" o "fai come sopra".
 
-            2. STRUTTURA TASSATIVA PER OGNI ESERCIZIO:
-               Tutti gli esercizi di TUTTI i giorni devono includere esattamente questi 7 campi:
-               - **Nome Esercizio:** [Nome evocativo e professionale]
-               - **Durata stimata & Serie:** [es. 12 minuti | 4 Serie | 10 Ripetizioni per lato | Recupero 60 sec]
-               - **🎯 Cosa allena nello specifico:** [Dettaglia il gesto tecnico/motorio esatto]
-               - **⭐ Perché è stato scelto ("Best of the Best"):** [Spiega la motivazione tecnica in relazione a {obiettivo} e {giocatori_simili}]
-               - **⚙️ Spiegazione Biomeccanica e Tecnica:** [Dettaglio su postura, piedi, baricentro e palla]
-               - **🎥 Video di riferimento:** [Incolla l'URL esatto dal database e aggiungi il minutaggio. Es: https://www.youtube.com/watch?v=ID_VIDEO&t=90s (Guarda dal minuto 1:30)]
+            2. VOLUME E DURATA ({durata_singola}):
+               Ogni singolo giorno deve coprire {durata_singola}.
+               - Se "2 ore" (120 min), inserisci per OGNI giorno almeno 7-8 esercizi completi divisi tra Riscaldamento, Blocco Signature Drills ({giocatori_simili}), Blocco Situazionale/Tiro ({obiettivo}) e Defaticamento.
 
-            3. RISPETTO TOTALE DI OGNI PARAMETRO UTENTE:
-               La scheda deve fare esplicito riferimento all'età ({eta}), al ruolo ({ruolo}) e alla logistica ({logistica}). Se si allena da solo, adatta l'esercizio in modo che possa farlo in autonomia.
-
-            4. UNIFORMITÀ DEI GIORNI:
-               Crea tutte le sezioni dei giorni ("### GIORNO 1", "### GIORNO 2", ecc.) previste dalla frequenza ({frequenza}). Il Giorno 2, 3 e successivi DEVONO contenere lo STESSO IDENTICO livello di dettaglio e numero di esercizi del Giorno 1.
+            3. STRUTTURA TASSATIVA PER OGNI ESERCIZIO (IN TUTTI I GIORNI):
+               Per OGNI esercizio di OGNI giorno devi compilare esattamente questi punti (sii denso, preciso ed essenziale senza fronzoli inutili):
+               - **Nome Esercizio:** [Nome professionale]
+               - **Durata & Serie:** [Serie | Reps/Tempo per lato | Recupero]
+               - **🎯 Cosa allena nello specifico:** [Gesto tecnico/coordinativo preciso]
+               - **⭐ Perché è stato scelto ("Best of the Best"):** [Motivazione in relazione a {obiettivo} e {giocatori_simili}]
+               - **⚙️ Spiegazione Biomeccanica e Tecnica:** [Istruzioni su piedi, baricentro, postura e palla]
+               - **🎥 Video di riferimento:** [Usa un URL esatto dal database + minutaggio. Es: https://www.youtube.com/watch?v=ID_VIDEO&t=90s (Guarda dal minuto 1:30)]
             """
 
             try:
                 chat_completion = client.chat.completions.create(
                     model="llama-3.3-70b-versatile",
                     messages=[
-                        {"role": "system", "content": "Sei un Master Coach NBA. Rispetti al 100% il minutaggio della sessione, creando il numero corretto di esercizi (almeno 7-9 esercizi per 2 ore). Usi solo link video funzionanti e leggi tutti i parametri dell'utente."},
+                        {"role": "system", "content": "Sei un Master Coach NBA. Mantieni il 100% di dettaglio, completezza e numero di esercizi per TUTTI i giorni della settimana, senza mai sintetizzare o tralasciare i giorni successivi al primo."},
                         {"role": "user", "content": prompt}
                     ],
                     temperature=0.2,
-                    max_tokens=4500
+                    max_tokens=8000
                 )
                 
                 scheda = chat_completion.choices[0].message.content
