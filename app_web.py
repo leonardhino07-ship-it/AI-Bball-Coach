@@ -320,7 +320,7 @@ else:
     # TAB 1: GENERAZIONE NUOVA SCHEDA
     # ------------------------------------------
     with main_tab1:
-        st.write("Programmazione settimanale Elite con calcolo rigoroso del volume e link video YouTube verificati.")
+        st.write("Programmazione settimanale Elite con calcolo rigoroso del volume.")
 
         with st.form("coach_form"):
             st.subheader("Parametri del Giocatore e Programmazione")
