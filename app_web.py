@@ -127,7 +127,7 @@ else:
             st.session_state['logged_in'] = False
             st.rerun()
 
-    st.write("Programmazione settimanale ad altissimo dettaglio biomeccanico.")
+    st.write("Programmazione settimanale Elite con analisi biomeccanica, motivazione della scelta e video di riferimento YouTube.")
 
     if "GROQ_API_KEY" in st.secrets:
         groq_api_key = st.secrets["GROQ_API_KEY"]
@@ -137,7 +137,7 @@ else:
 
     client = Groq(api_key=groq_api_key)
 
-    # RICERCA YOUTUBE AVANZATA (Estragga titoli, link e numero di visualizzazioni)
+    # RICERCA YOUTUBE RIGIDA ESCLUSIVAMENTE PER IL BASKET
     def cerca_video_youtube_dettagliati(giocatori, obiettivo):
         video_found = []
         queries = []
@@ -145,11 +145,14 @@ else:
         lista_g = [g.strip() for g in giocatori.split(',') if g.strip()]
         
         for g in lista_g:
-            queries.append(f"{g} {obiettivo} drill workout tutorial")
-            queries.append(f"{g} signature basketball move breakdown")
+            queries.append(f"{g} basketball drill tutorial")
+            queries.append(f"{g} basketball workout breakdown")
 
         if obiettivo:
-            queries.append(f"basketball {obiettivo} best drill tutorial")
+            queries.append(f"best basketball {obiettivo} drill workout tutorial")
+
+        if not queries:
+            queries.append(f"best basketball {obiettivo} drill tutorial")
 
         for q in queries[:4]:
             try:
@@ -157,9 +160,11 @@ else:
                 results = search.result().get('result', [])
                 for vid in results:
                     v_id = vid.get('id')
-                    title = vid.get('title', 'Tutorial Esercizio')
-                    views = vid.get('viewCount', {}).get('text', 'Visualizzazioni non disponibili') if isinstance(vid.get('viewCount'), dict) else "Molte visualizzazioni"
-                    if v_id:
+                    title = vid.get('title', 'Tutorial Esercizio Basketball')
+                    views = vid.get('viewCount', {}).get('text', 'Molte visualizzazioni') if isinstance(vid.get('viewCount'), dict) else "Molte visualizzazioni"
+                    
+                    # FILTRO TASSATIVO ANTI-RICKROLL E ANTI-LINK ERRATI
+                    if v_id and v_id != "dQw4w9WgXcQ":
                         clean_url = f"https://www.youtube.com/watch?v={v_id}"
                         video_found.append({
                             "title": title,
@@ -170,11 +175,11 @@ else:
                 pass
 
         if not video_found:
-            return "Nessun video estratto direttamente da YouTube."
+            return "NESSUN VIDEO TROVATO. NON INSERIRE ALCUN LINK YOUTUBE IN NESSUN ESERCIZIO."
 
-        formatted_text = "ELENCO VIDEO TROVATI SU YOUTUBE (ANALIZZA PER POPOLARITÀ E RILEVANZA):\n"
+        formatted_text = "ELENCO VIDEO ESCLUSIVAMENTE DI BASKET TROVATI SU YOUTUBE (USA SOLO QUESTI URL SENZA MODIFICARLI):\n"
         for idx, v in enumerate(video_found, 1):
-            formatted_text += f"{idx}. TITOLO: \"{v['title']}\" | VISUALIZZAZIONI: {v['views']} | LINK: {v['url']}\n"
+            formatted_text += f"{idx}. TITOLO: \"{v['title']}\" | VISUALIZZAZIONI: {v['views']} | URL ESATTO: {v['url']}\n"
 
         return formatted_text
 
@@ -198,20 +203,20 @@ else:
         giocatori_simili = st.text_input("A chi ti ispiri? (Separa con virgola. Es: Stephen Curry, Kobe Bryant)", value=st.session_state['giocatori_memoria'])
         note_extra = st.text_area("Note (es. infortuni, attrezzi a disposizione come coni, pallina da tennis)")
         
-        submit_button = st.form_submit_button(label="Genera Scheda di Allenamento Perfetta")
+        submit_button = st.form_submit_button(label="Genera Scheda di Allenamento Elite")
 
     if submit_button:
         # Salva i giocatori preferiti nel profilo utente
         aggiorna_memoria_giocatori(st.session_state['username'], giocatori_simili)
         st.session_state['giocatori_memoria'] = giocatori_simili
 
-        with st.spinner("Ricerca ed analisi dei video più popolari su YouTube in corso..."):
+        with st.spinner("Ricerca ed analisi dei video più popolari di basket su YouTube in corso..."):
             risultati_youtube = cerca_video_youtube_dettagliati(giocatori_simili, obiettivo)
 
         with st.spinner("L'IA sta elaborando la scheda iper-dettagliata basata sui video analizzati..."):
             prompt = f"""
-            Sei un MASTER COACH E PREPARATORE ATLETICO NBA.
-            Devi creare un programma di allenamento settimanale estramente rigoroso, ultra-dettagliato e direttamente collegato ai migliori video di YouTube analizzati.
+            Sei un MASTER COACH E PREPARATORE ATLETICO NBA DI LIVELLO MONDIALE.
+            Crea un programma di allenamento settimanale con esercizi 'BEST OF THE BEST', ultra-dettagliati e basati unicamente su drill reali di pallacanestro.
 
             DATI UTENTE:
             - Nome: {nome} | Età: {eta} | Ruolo: {ruolo} | Livello: {livello}
@@ -222,36 +227,38 @@ else:
             - GIOCATORI MODELLO: {giocatori_simili}
             - NOTE/ATTREZZI: {note_extra}
 
-            RISULTATI RICERCA YOUTUBE IN TEMPO REALE:
+            RISULTATI RICERCA YOUTUBE (EXCLUSIVAMENTE VIDEO BASKET):
             {risultati_youtube}
 
-            REGOLE FERREE DA RISPETTARE TASSATIVAMENTE:
+            REGOLE RIGIDE ED INDISPENSIBILI PER OGNI SINGOLO ESERCIZIO:
 
-            1. STRUTTURA RIGIDA PER OGNI SINGOLO ESERCIZIO:
-               Tutti gli esercizi (dal Giorno 1 all'ultimo giorno previsto) DEVONO contenere i seguenti campi ben distinti:
-               - **Nome Esercizio:** [Nome chiaro ed evocativo]
+            1. STRUTTURA TASSATIVA PER TUTTI GLI ESERCIZIO:
+               Per OGNI esercizio proposto in TUTTI i giorni della scheda, devi includere TASSATIVAMENTE i seguenti campi:
+               - **Nome Esercizio:** [Nome evocativo e professionale del drill]
                - **Serie (Sets):** [Numero esatto]
-               - **Ripetizioni / Durata:** [Numero esatto di rep per lato o tempo in secondi]
-               - **Recupero tra le serie:** [Tempo di riposo esatto in secondi/minuti]
-               - **Spiegazione Biomeccanica e Tecnica:** [Spiegazione dettagliatissima su come posizionare piedi, busto, baricentro e come trattare la palla].
+               - **Ripetizioni / Durata:** [Ripetizioni per lato o tempo esatto]
+               - **Recupero tra le serie:** [Tempo di riposo esatto]
+               - **🎯 Cosa allena nello specifico:** [Spiega dettagliatamente quale gesto tecnico di basket, qualità motoria o abilità biomeccanica sviluppa questo esercizio]
+               - **⭐ Perché è stato scelto ("Best of the Best"):** [Spiega la motivazione tecnica per cui questo specifico drill è tra i migliori in assoluto per raggiungere l'obiettivo ({obiettivo}) e come si collega alle caratteristiche dei campioni ({giocatori_simili})]
+               - **⚙️ Spiegazione Biomeccanica e Tecnica:** [Dettaglio maniacale su postura, angoli delle ginocchia, lavoro di piedi (footwork), gestione del baricentro e stabilità della palla]
+               - **🎥 Video di riferimento:** [Usa SOLO ed ESCLUSIVAMENTE gli URL del database fornito qui sopra. Indica il minutaggio esatto del drill, es: https://www.youtube.com/watch?v=...&t=45s (Guarda dal minuto 0:45)]
 
-            2. USO DEI VIDEO POPOLARI E MINUTAGGIO (TIMESTAMP):
-               - Valuta i video forniti da YouTube considerando sia le visualizzazioni (popolarità) sia la pertinenza con l'obiettivo ({obiettivo}) e i giocatori scelti ({giocatori_simili}).
-               - Se individui un esercizio svolto o ispirato a un giocatore modello presente nei video, UTILIZZA quel preciso esercizio nella scheda.
-               - Sotto l'esercizio, inserisci il link del video e indica il MINUTAGGIO ESATTO (timestamp) per permettere all'utente di guardare solo quel movimento specifico, formattandolo così:
-                 👉 **Video di riferimento:** LINK_YOUTUBE (Guarda dal minuto X:XX per vedere l'esecuzione precisa)
+            2. DIVIETO ABSOLUTO DI LINK FINTI / NON DI BASKET:
+               - È SEVERAMENTE VIETATO inventare link o utilizzare l'ID 'dQw4w9WgXcQ' o link non correlati al basket.
+               - Copia ESCLUSIVAMENTE gli URL esatti presenti nel blocco 'RISULTATI RICERCA YOUTUBE'.
+               - Se per un esercizio non è presente un video pertinente nella lista, OMETTI del tutto la riga del video senza inventare nulla.
 
-            3. UNIFORMITÀ E DURATA ({durata_singola}):
-               - Organizza la scheda in sezioni per ogni giorno ("### GIORNO 1", "### GIORNO 2", ecc.).
-               - Mieni lo STESSO IDENTICO livello di dettaglio approfondito in TUTTI i giorni. È vietato sintetizzare o tralasciare dettagli nei giorni successivi.
-               - Rispetta scrupolosamente la durata di {durata_singola} per ogni sessione inserendo un numero adeguato di esercizi e blocchi di lavoro (Riscaldamento, Tecnica, Tiro/Situazionale, Defaticamento).
+            3. UNIFORMITÀ E RISPETTO DEL TEMPO ({durata_singola}):
+               - Dividi la scheda in sezioni per ogni giorno ("### GIORNO 1", "### GIORNO 2", ecc.).
+               - Mantieni lo STESSO IDENTICO livello di dettaglio approfondito in TUTTI i giorni previsti.
+               - Rispetta scrupolosamente la durata totale di {durata_singola} inserendo il giusto numero di esercizi per coprire l'intera sessione.
             """
 
             try:
                 chat_completion = client.chat.completions.create(
                     model="llama-3.3-70b-versatile",
                     messages=[
-                        {"role": "system", "content": "Sei un Master Coach NBA implacabile sul dettaglio. Crei schede complete indicando serie, ripetizioni, tempi di recupero, spiegazioni biomeccaniche approfondite e minutaggi esatti per i video di YouTube."},
+                        {"role": "system", "content": "Sei un Master Coach NBA implacabile sul dettaglio. Per ogni esercizio spieghi esattamente COSA allena e PERCHÉ è stato scelto tra i migliori. Usi solo video reali di basket e minutaggi precisi."},
                         {"role": "user", "content": prompt}
                     ],
                     temperature=0.2,
@@ -259,7 +266,7 @@ else:
                 )
                 
                 scheda = chat_completion.choices[0].message.content
-                st.success("Programmazione Settimanale Iper-Dettagliata generata!")
+                st.success("Programmazione Settimanale Elite generata con successo!")
                 st.markdown("---")
                 st.markdown(scheda)
                 
