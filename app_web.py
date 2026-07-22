@@ -81,9 +81,7 @@ if not st.session_state['logged_in']:
         log_user = st.text_input("Username", key="log_user")
         log_pass = st.text_input("Password", type="password", key="log_pass")
         
-        # Pulsanti "Finti" per far capire l'intenzione futura (Google/Apple richiedono API terze)
-        st.info("💡 L'accesso con Google, Apple o Numero di telefono sarà attivato collegando un server cloud (es. Firebase/Supabase).")
-        
+       
         if st.button("Accedi"):
             user_data = login_utente(log_user, log_pass)
             if user_data:
