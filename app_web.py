@@ -1,13 +1,12 @@
 import streamlit as st
 from groq import Groq
 from youtubesearchpython import VideosSearch
-import urllib.parse
 
 # Configurazione della pagina
 st.set_page_config(page_title="AI Basketball Coach", page_icon="🏀", layout="centered")
 
-st.title("🏀 AI Basketball Coach")
-st.write("Il tuo allenatore personale basato sull'IA con video dimostrativi per ogni esercizio (YouTube & TikTok).")
+st.title("🏀 AI Basketball Coach PRO")
+st.write("Schede di allenamento iper-dettagliate con analisi dei movimenti e integrazione video.")
 
 # Controllo della chiave API nei Secrets
 if "GROQ_API_KEY" in st.secrets:
@@ -18,50 +17,36 @@ else:
 
 client = Groq(api_key=groq_api_key)
 
-# FUNZIONE MOTORE DI RICERCA YOUTUBE (Con ordinamento per visualizzazioni)
-def cerca_migliori_video_youtube(query_ricerca, limite=10):
-    try:
-        search = VideosSearch(query_ricerca, limit=limite)
-        videos = search.result()['result']
-        
-        def get_views(vid):
-            testo_views = vid.get('viewCount', {}).get('text', '0')
-            if not testo_views: return 0
-            s = testo_views.lower().replace(',', '').replace(' views', '').replace(' visualizzazioni', '').strip()
-            moltiplicatore = 1
-            if 'k' in s:
-                moltiplicatore = 1000
-                s = s.replace('k', '')
-            elif 'm' in s:
-                moltiplicatore = 1000000
-                s = s.replace('m', '')
-            try:
-                return int(float(s) * moltiplicatore)
-            except:
-                return 0
+# FUNZIONE MOTORE DI RICERCA YOUTUBE OTTIMIZZATA
+def cerca_migliori_video_youtube(giocatori):
+    risultati_totali = ""
+    lista_giocatori = [g.strip() for g in giocatori.split(',') if g.strip()]
+    
+    if not lista_giocatori:
+        return "Nessun giocatore inserito."
 
-        videos_ordinati = sorted(videos, key=get_views, reverse=True)
-        
-        risultati = []
-        for vid in videos_ordinati[:3]: # Preleva i 3 video più visti
-            titolo = vid.get('title', 'Titolo Sconosciuto')
-            link = vid.get('link', '#')
-            views = vid.get('viewCount', {}).get('text', 'Visualizzazioni sconosciute')
-            risultati.append(f"- [{titolo}]({link}) (Visualizzazioni: {views})")
+    for giocatore in lista_giocatori:
+        try:
+            # Ricerca semplificata per garantire sempre risultati (sia per star che per role player)
+            query = f"{giocatore} basketball workout highlights skills"
+            search = VideosSearch(query, limit=10)
+            videos = search.result()['result']
             
-        return "\n".join(risultati)
-    except Exception as e:
-        return "Impossibile recuperare video al momento."
-
-# FUNZIONE GENERATRICE LINK TIKTOK
-def genera_link_tiktok(query):
-    query_encoded = urllib.parse.quote(f"basketball {query} drill tutorial")
-    return f"https://www.tiktok.com/search?q={query_encoded}"
+            # Filtro base per prendere i 2 video più rilevanti
+            risultati_totali += f"\n--- VIDEO STUDIO PER: {giocatore.upper()} ---\n"
+            for vid in videos[:2]:
+                titolo = vid.get('title', 'Titolo Sconosciuto')
+                link = vid.get('link', '#')
+                risultati_totali += f"- [{titolo}]({link})\n"
+        except Exception as e:
+            risultati_totali += f"- Impossibile estrarre link diretti per {giocatore}. L'IA suggerirà le parole chiave esatte per la ricerca.\n"
+            
+    return risultati_totali
 
 
 # INTERFACCIA UTENTE
 with st.form("coach_form"):
-    st.subheader("Profilo del Giocatore e Parametri di Allenamento")
+    st.subheader("Profilo del Giocatore e Parametri (Compila con cura)")
     
     col1, col2 = st.columns(2)
     
@@ -72,81 +57,66 @@ with st.form("coach_form"):
         livello = st.selectbox("Livello di gioco", ["Principiante", "Intermedio", "Avanzato", "Professionista"])
     
     with col2:
-        obiettivo = st.text_input("Obiettivo principale (es. tiro da tre, palleggio esitazione, primo passo)")
+        obiettivo = st.text_input("Obiettivo preciso (es. palleggio arresto e tiro, floater, difesa sull'uomo)")
         frequenza = st.selectbox("Frequenza settimanale", ["1-2 volte", "3-4 volte", "5+ volte"])
-        durata_singola = st.radio("Durata della singola sessione:", ["30 minuti", "1 ora", "1 ora e 30", "2 ore", "2 ore e 30", "3 ore"])
-        logistica = st.radio("Come ti alleni solitamente?", ["Da solo", "In compagnia"])
+        durata_singola = st.radio("Durata esatta sessione:", ["30 minuti", "1 ora", "1 ora e 30", "2 ore", "2 ore e 30", "3 ore"])
+        logistica = st.radio("Logistica di allenamento:", ["Da solo", "In compagnia"])
 
-    # Giocatori Simili (Film Study)
-    st.subheader("Analisi Stile di Gioco (Film Study)")
-    giocatori_simili = st.text_input("A quali giocatori ti ispiri o quali hanno uno stile simile al tuo? (Separa con una virgola. Es: Milos Teodosic, Payton Pritchard)")
-
-    note_extra = st.text_area("Note aggiuntive (es. infortuni, attrezzi disponibili)")
+    st.subheader("Film Study (Studio dei Giocatori)")
+    giocatori_simili = st.text_input("Giocatori di riferimento (Separa con virgola. Es: Jalen Brunson, Austin Reaves, Facundo Campazzo)")
+    note_extra = st.text_area("Note (es. infortuni, attrezzi a disposizione come coni, palla medica, spara-palloni)")
     
-    submit_button = st.form_submit_button(label="Genera Scheda con Video Tutorial (YouTube & TikTok)")
+    submit_button = st.form_submit_button(label="Genera Scheda Professionale Avanzata")
 
 # ELABORAZIONE
 if submit_button:
-    # 1. Fase di Ricerca Video
-    with st.spinner("Sto scansionando i migliori tutorial su YouTube e preparando i link per TikTok..."):
-        
-        # Ricerca video per Giocatori Simili
-        video_giocatori = ""
-        if giocatori_simili.strip():
-            video_giocatori = cerca_migliori_video_youtube(f"{giocatori_simili} basketball workout drills")
-        
-        # Ricerca video specifici per l'Obiettivo scelto
-        query_obiettivo = obiettivo if obiettivo else "basketball fundamentals"
-        video_esercizi = cerca_migliori_video_youtube(f"how to {query_obiettivo} basketball drill tutorial")
-        
-        # Link TikTok per l'obiettivo
-        link_tiktok_generale = genera_link_tiktok(query_obiettivo)
+    with st.spinner("Ricerca dei video di riferimento in corso..."):
+        video_trovati = cerca_migliori_video_youtube(giocatori_simili)
 
-    # 2. Fase di Generazione IA
-    with st.spinner("L'IA sta creando la scheda inserendo i link ai video per ogni esercizio..."):
+    with st.spinner("L'IA sta assemblando gli esercizi al dettaglio. Nessuna indicazione vaga consentita..."):
         prompt = f"""
-        Sei un preparatore atletico ed un allenatore di pallacanestro professionista. 
-        Genera una scheda di allenamento dettagliata, professionale e personalizzata basandoti RIGOROSAMENTE su TUTTI i seguenti dati:
+        Sei un preparatore atletico NBA ed un allenatore di pallacanestro di altissimo livello.
+        Il tuo compito è creare una scheda di allenamento ESTREMAMENTE PRECISA, TECNICA e DETTAGLIATA.
+        VIETATO ESSERE VAGHI. Non scrivere mai frasi generiche come "fai un po' di palleggio" o "esercitati al tiro".
+        Devi fornire esercizi specifici, meccaniche di movimento, serie, ripetizioni e tempi di recupero.
 
-        DATI UTENTE:
-        - Nome: {nome}
-        - Età: {eta} anni | Ruolo: {ruolo} | Livello: {livello}
-        - Obiettivo principale: {obiettivo}
-        - Frequenza: {frequenza} | Durata singola sessione: {durata_singola}
-        - Modalità: {logistica}
-        - Giocatori di riferimento: {giocatori_simili}
-        - Note extra: {note_extra}
+        DATI TASSATIVI DELL'UTENTE (Devi basare TUTTA la scheda su questi, senza ignorarne nessuno):
+        - Nome: {nome} | Età: {eta} | Ruolo: {ruolo} | Livello: {livello}
+        - Obiettivo Focus: {obiettivo}
+        - Durata Sessione: {durata_singola}
+        - Modalità (Logistica): {logistica}
+        - Giocatori Modello: {giocatori_simili}
+        - Note fisiche/attrezzatura: {note_extra}
 
-        FONTI E VIDEO TROVATI DAL SISTEMA:
-        - Video YouTube più visti per i giocatori di riferimento:
-        {video_giocatori}
+        VIDEO RECUPERATI DAL SISTEMA:
+        {video_trovati}
 
-        - Video YouTube più visti per l'obiettivo ({obiettivo}):
-        {video_esercizi}
+        REGOLE FERREE PER LA CREAZIONE DELLA SCHEDA:
+        1. ADATTAMENTO LOGISTICO: Se l'utente ha scelto "Da solo", è SEVERAMENTE VIETATO inserire esercizi che richiedono passaggi da un compagno o difensori reali. Inventa auto-passaggi o uso di ostacoli/sedie. Se ha scelto "In compagnia", sfrutta i compagni per passaggi, letture e 1v1.
+        2. GESTIONE DEL TEMPO: La somma dei minuti di tutti gli esercizi deve coincidere esattamente con "{durata_singola}".
+        3. FILM STUDY PRATICO: Analizza i "Signature Moves" (mosse tipiche) dei giocatori modello ({giocatori_simili}) e inserisci esercizi SPECIFICI per replicare le loro meccaniche esatte.
+        4. FORMATO DI OGNI ESERCIZIO: Ogni singolo esercizio DEVE avere questa struttura:
+           - **Nome Esercizio** (es. Mikan Drill Inverso, Esitazione Drop e Tiro)
+           - **Durata/Serie/Ripetizioni**: (es. 3 Serie da 10 tiri segnati, recupero 45 sec)
+           - **Meccanica ed Esecuzione Dettagliata**: Spiega ESATTAMENTE come muovere i piedi, dove guardare, come posizionare il corpo.
+           - Se applicabile, inserisci il link YouTube fornito sopra o consiglia la ricerca esatta da fare su Google/YouTube (es. "Cerca: 'Jalen Brunson footwork drill'").
 
-        - Link di ricerca TikTok dedicato:
-        [Guarda i Reel e Tutorial su TikTok]({link_tiktok_generale})
-
-        REGOLE FONDAMENTALI DI STRUTTURAZIONE SCHEDA:
-        1. Rispetta tutti i parametri dell'utente (durata {durata_singola}, modalità {logistica}, livello {livello}).
-        2. Per OGNI esercizio o movimento tecnico inserito nella scheda:
-           - Spiega chiaramente l'esecuzione tecnica.
-           - Aggiungi sempre una riga: **"🎥 GUARDA IL VIDEO/TUTORIAL:"** inserendo sia il link YouTube reale fornito sopra, sia invitando l'utente a cliccare sul link TikTok [Guarda su TikTok]({link_tiktok_generale}) per vedere brevi Reel dimostrativi della mossa.
-        3. Assicurati che tutti i link YouTube siano quelli reali forniti nel prompt.
+        La scheda deve iniziare con un paragrafo intitolato "ANALISI DEL PROFILO" in cui confermi all'utente come hai strutturato il workout tenendo conto della durata, della logistica e del livello inseriti.
         """
 
         try:
             chat_completion = client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
                 messages=[
-                    {"role": "system", "content": "Sei un coach di basket esperto. Integri sempre link video cliccabili (YouTube e TikTok) per permettere all'utente di studiare l'esecuzione visiva di ogni esercizio."},
+                    {"role": "system", "content": "Sei un allenatore di basket professionista, cinico e precisissimo. Rifiuti la vaghezza e fornisci solo dettagli tecnici di alto livello."},
                     {"role": "user", "content": prompt}
                 ],
-                temperature=0.7,
-                max_tokens=3500
+                temperature=0.4, # Abbassata la temperatura per risposte più logiche, precise e meno creative/vaghe
+                max_tokens=4000
             )
             
             scheda = chat_completion.choices[0].message.content
+            st.success("Scheda professionale generata con successo!")
             st.markdown("---")
             st.markdown(scheda)
             
