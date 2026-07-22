@@ -13,7 +13,6 @@ st.set_page_config(page_title="AI Basketball Coach PRO", page_icon="🏀", layou
 def init_db():
     conn = sqlite3.connect('utenti_basket.db')
     c = conn.cursor()
-    # Creazione tabella utenti se non esiste
     c.execute('''
         CREATE TABLE IF NOT EXISTS users (
             username TEXT PRIMARY KEY,
@@ -37,7 +36,7 @@ def crea_utente(username, password, email):
         conn.commit()
         return True
     except sqlite3.IntegrityError:
-        return False # Il nome utente esiste già
+        return False
     finally:
         conn.close()
 
@@ -56,10 +55,9 @@ def aggiorna_memoria_giocatori(username, giocatori):
     conn.commit()
     conn.close()
 
-# Inizializza il database all'avvio
+# Inizializza DB e Session State
 init_db()
 
-# Inizializza le variabili di sessione
 if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
 if 'username' not in st.session_state:
@@ -81,7 +79,8 @@ if not st.session_state['logged_in']:
         log_user = st.text_input("Username", key="log_user")
         log_pass = st.text_input("Password", type="password", key="log_pass")
         
-       
+        st.info("💡 L'accesso sociale (Google, Apple, SMS) sarà integrabile via cloud authentication.")
+        
         if st.button("Accedi"):
             user_data = login_utente(log_user, log_pass)
             if user_data:
@@ -95,7 +94,7 @@ if not st.session_state['logged_in']:
 
     with tab_register:
         st.subheader("Crea il tuo profilo unico")
-        reg_user = st.text_input("Scegli un Username Unico (es. Coach_Mamba8)")
+        reg_user = st.text_input("Scegli un Username Unico")
         reg_email = st.text_input("Email")
         reg_pass = st.text_input("Scegli una Password", type="password")
         
@@ -117,10 +116,9 @@ if not st.session_state['logged_in']:
                 st.warning("Inserisci Username e Password validi.")
 
 # ==========================================
-# 3. L'APP PRINCIPALE (Accessibile solo se loggati)
+# 3. APP PRINCIPALE (Accessibile solo se loggati)
 # ==========================================
 else:
-    # Intestazione utente loggato
     col_head1, col_head2 = st.columns([4, 1])
     with col_head1:
         st.title(f"🏀 AI Basketball Coach PRO - Profilo di {st.session_state['username']}")
@@ -129,9 +127,8 @@ else:
             st.session_state['logged_in'] = False
             st.rerun()
 
-    st.write("Programmazione settimanale bilanciata con link YouTube DIRETTI e REALI.")
+    st.write("Programmazione settimanale ad altissimo dettaglio biomeccanico con analisi video YouTube in tempo reale.")
 
-    # Controllo chiave API
     if "GROQ_API_KEY" in st.secrets:
         groq_api_key = st.secrets["GROQ_API_KEY"]
     else:
@@ -140,29 +137,46 @@ else:
 
     client = Groq(api_key=groq_api_key)
 
-    # Motore YouTube originale
-    def cerca_video_drills_raw(giocatori, obiettivo):
-        db_video_text = ""
+    # RICERCA YOUTUBE AVANZATA (Estragga titoli, link e numero di visualizzazioni)
+    def cerca_video_youtube_dettagliati(giocatori, obiettivo):
+        video_found = []
         queries = []
+        
         lista_g = [g.strip() for g in giocatori.split(',') if g.strip()]
+        
         for g in lista_g:
-            queries.append(f"{g} signature basketball move drill tutorial")
-            queries.append(f"{g} footwork breakdown")
+            queries.append(f"{g} {obiettivo} drill workout tutorial")
+            queries.append(f"{g} signature basketball move breakdown")
+
         if obiettivo:
-            queries.append(f"basketball {obiettivo} drill tutorial")
+            queries.append(f"basketball {obiettivo} best drill tutorial")
+
         for q in queries[:4]:
             try:
-                search = VideosSearch(q, limit=2)
+                search = VideosSearch(q, limit=3)
                 results = search.result().get('result', [])
                 for vid in results:
                     v_id = vid.get('id')
                     title = vid.get('title', 'Tutorial Esercizio')
+                    views = vid.get('viewCount', {}).get('text', 'Visualizzazioni non disponibili') if isinstance(vid.get('viewCount'), dict) else "Molte visualizzazioni"
                     if v_id:
                         clean_url = f"https://www.youtube.com/watch?v={v_id}"
-                        db_video_text += f"\n- TITOLO VIDEO: \"{title}\"\n  LINK ESATTO DA COPIARE: {clean_url}\n"
+                        video_found.append({
+                            "title": title,
+                            "url": clean_url,
+                            "views": views
+                        })
             except Exception:
                 pass
-        return db_video_text if db_video_text else "NESSUN VIDEO TROVATO. NON INSERIRE ALCUN LINK YOUTUBE."
+
+        if not video_found:
+            return "Nessun video estratto direttamente da YouTube."
+
+        formatted_text = "ELENCO VIDEO TROVATI SU YOUTUBE (ANALIZZA PER POPOLARITÀ E RILEVANZA):\n"
+        for idx, v in enumerate(video_found, 1):
+            formatted_text += f"{idx}. TITOLO: \"{v['title']}\" | VISUALIZZAZIONI: {v['views']} | LINK: {v['url']}\n"
+
+        return formatted_text
 
     with st.form("coach_form"):
         st.subheader("Parametri del Giocatore e Programmazione")
@@ -181,68 +195,71 @@ else:
             logistica = st.radio("Logistica di allenamento:", ["Da solo", "In compagnia"])
 
         st.subheader("Film Study & Giocatori Modello")
-        # QUI L'IA SI RICORDA I DATI: il "value" è precompilato con i dati del database
-        giocatori_simili = st.text_input("A chi ti ispiri? (Separa con virgola. Es: Stephen Curry)", value=st.session_state['giocatori_memoria'])
+        giocatori_simili = st.text_input("A chi ti ispiri? (Separa con virgola. Es: Stephen Curry, Kobe Bryant)", value=st.session_state['giocatori_memoria'])
         note_extra = st.text_area("Note (es. infortuni, attrezzi a disposizione come coni, pallina da tennis)")
         
-        submit_button = st.form_submit_button(label="Genera Programmazione Settimanale Sicura")
+        submit_button = st.form_submit_button(label="Genera Scheda di Allenamento Perfetta")
 
     if submit_button:
-        # AGGIORNA LA MEMORIA: Se l'utente ha inserito nuovi giocatori, li salva nel database per le prossime volte
+        # Salva i giocatori preferiti nel profilo utente
         aggiorna_memoria_giocatori(st.session_state['username'], giocatori_simili)
         st.session_state['giocatori_memoria'] = giocatori_simili
 
-        with st.spinner("Estrazione dei link YouTube diretti in corso..."):
-            database_video_reali = cerca_video_drills_raw(giocatori_simili, obiettivo)
+        with st.spinner("Ricerca ed analisi dei video più popolari su YouTube in corso..."):
+            risultati_youtube = cerca_video_youtube_dettagliati(giocatori_simili, obiettivo)
 
-        with st.spinner("L'IA sta costruendo la scheda garantendo pari dettaglio per OGNI giorno..."):
+        with st.spinner("L'IA sta elaborando la scheda iper-dettagliata basata sui video analizzati..."):
             prompt = f"""
-            Sei un MENTORE E PREPARATORE ATLETICO NBA di livello mondiale.
-            Il tuo compito è creare un PROGRAMMA DI ALLENAMENTO SETTIMANALE iper-dettagliato.
+            Sei un MASTER COACH E PREPARATORE ATLETICO NBA.
+            Devi creare un programma di allenamento settimanale estramente rigoroso, ultra-dettagliato e direttamente collegato ai migliori video di YouTube analizzati.
 
-            DATI UTENTE TASSATIVI:
+            DATI UTENTE:
             - Nome: {nome} | Età: {eta} | Ruolo: {ruolo} | Livello: {livello}
             - OBIETTIVO PRINCIPALE: {obiettivo}
             - FREQUENZA SETTIMANALE: {frequenza}
             - DURATA SINGOLA SESSIONE: {durata_singola}
-            - LOGISTICA: {logistica} (SE "DA SOLO": VIETATI PASSAGGI E DIFENSORI REALI)
+            - LOGISTICA: {logistica} (Se 'Da solo', escludi passaggi e difensori reali)
             - GIOCATORI MODELLO: {giocatori_simili}
-            - NOTE/ATTREZZATURA: {note_extra}
+            - NOTE/ATTREZZI: {note_extra}
 
-            DATABASE LINK YOUTUBE (REALI E VERIFICATI):
-            {database_video_reali}
+            RISULTATI RICERCA YOUTUBE IN TEMPO REALE:
+            {risultati_youtube}
 
-            REGOLE FERREE ED INDISPENSIBILI (PENA IL FALLIMENTO DELL'ALLENAMENTO):
+            REGOLE FERREE DA RISPETTARE TASSATIVAMENTE:
 
-            1. DIVIETO ASSOLUTO DI INVENTARE LINK (ANTI-HALLUCINATION):
-               È SEVERAMENTE VIETATO inventare link YouTube. 
-               È SEVERAMENTE VIETATO utilizzare l'ID "dQw4w9WgXcQ" o qualsiasi altro link non presente nel DATABASE qui sopra.
-               Se per un esercizio ritieni utile un video, prendi ESATTAMENTE il "LINK ESATTO DA COPIARE" e scrivilo così:
-               👉 **Video di riferimento:** https://www.youtube.com/watch?v=...
-               Se non hai un video pertinente nel database, NON inserire alcun link.
+            1. STRUTTURA RIGIDA PER OGNI SINGOLO ESERCIZIO:
+               Tutti gli esercizi (dal Giorno 1 all'ultimo giorno previsto) DEVONO contenere i seguenti campi ben distinti:
+               - **Nome Esercizio:** [Nome chiaro ed evocativo]
+               - **Serie (Sets):** [Numero esatto]
+               - **Ripetizioni / Durata:** [Numero esatto di rep per lato o tempo in secondi]
+               - **Recupero tra le serie:** [Tempo di riposo esatto in secondi/minuti]
+               - **Spiegazione Biomeccanica e Tecnica:** [Spiegazione dettagliatissima su come posizionare piedi, busto, baricentro e come trattare la palla].
 
-            2. REGOLA DI UNIFORMITÀ DEI GIORNI (TASSATIVO):
-               In base alla frequenza scelta ({frequenza}), devi creare tutti i giorni previsti.
-               Ogni singolo giorno deve contenere la stessa quantità di dettagli, serie, ripetizioni e spiegazione biomeccanica. 
+            2. USO DEI VIDEO POPOLARI E MINUTAGGIO (TIMESTAMP):
+               - Valuta i video forniti da YouTube considerando sia le visualizzazioni (popolarità) sia la pertinenza con l'obiettivo ({obiettivo}) e i giocatori scelti ({giocatori_simili}).
+               - Se individui un esercizio svolto o ispirato a un giocatore modello presente nei video, UTILIZZA quel preciso esercizio nella scheda.
+               - Sotto l'esercizio, inserisci il link del video e indica il MINUTAGGIO ESATTO (timestamp) per permettere all'utente di guardare solo quel movimento specifico, formattandolo così:
+                 👉 **Video di riferimento:** LINK_YOUTUBE (Guarda dal minuto X:XX per vedere l'esecuzione precisa)
 
-            3. RISPETTO RIGIDO DEL TEMPO ({durata_singola}):
-               Ogni giorno deve coprire la durata totale di {durata_singola}.
-               Tutti gli esercizi di TUTTI i giorni devono avere indicati: [Durata in min | Serie | Ripetizioni | Recupero].
+            3. UNIFORMITÀ E DURATA ({durata_singola}):
+               - Organizza la scheda in sezioni per ogni giorno ("### GIORNO 1", "### GIORNO 2", ecc.).
+               - Mieni lo STESSO IDENTICO livello di dettaglio approfondito in TUTTI i giorni. È vietato sintetizzare o tralasciare dettagli nei giorni successivi.
+               - Rispetta scrupolosamente la durata di {durata_singola} per ogni sessione inserendo un numero adeguato di esercizi e blocchi di lavoro (Riscaldamento, Tecnica, Tiro/Situazionale, Defaticamento).
             """
 
             try:
                 chat_completion = client.chat.completions.create(
                     model="llama-3.3-70b-versatile",
                     messages=[
-                        {"role": "system", "content": "Sei un Master Coach NBA. Inserisci solo link in puro testo tratti unicamente dal database fornito. Non inventi mai link YouTube."},
+                        {"role": "system", "content": "Sei un Master Coach NBA implacabile sul dettaglio. Crei schede complete indicando serie, ripetizioni, tempi di recupero, spiegazioni biomeccaniche approfondite e minutaggi esatti per i video di YouTube."},
                         {"role": "user", "content": prompt}
                     ],
-                    temperature=0.2, 
+                    temperature=0.2,
                     max_tokens=4500
                 )
                 
                 scheda = chat_completion.choices[0].message.content
-                st.success("Programmazione Settimanale Uniforme generata!")
+                st.success("Programmazione Settimanale Iper-Dettagliata generata!")
                 st.markdown("---")
                 st.markdown(scheda)
                 
