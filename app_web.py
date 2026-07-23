@@ -223,10 +223,10 @@ else:
         queries = []
         lista_g = [g.strip() for g in giocatori.split(',') if g.strip()]
         for g in lista_g:
-            queries.append(f"{g} basketball drill breakdown")
-            queries.append(f"{g} basketball workout tutorial")
+            queries.append(f"{g} basketball drill breakdown methodology")
+            queries.append(f"{g} elite basketball workout tutorial")
         if obiettivo:
-            queries.append(f"best basketball {obiettivo} drill tutorial")
+            queries.append(f"best elite basketball {obiettivo} drill tutorial pro")
 
         for q in queries[:3]:
             try:
@@ -239,13 +239,13 @@ else:
                 pass
 
         if not video_found:
-            return "Nessun esercizio specifico estratto dal web, procedi con la tua conoscenza di Master Coach."
-        return "Esercizi e concetti chiave individuati per ispirazione dal web:\n" + "\n".join([f"- {t}" for t in video_found])
+            return "Nessun esercizio specifico estratto dal web, procedi con la tua profonda conoscenza delle metodologie dei Master Coach."
+        return "Esercizi, concetti chiave e metodologie d'élite individuati per ispirazione dal web:\n" + "\n".join([f"- {t}" for t in video_found])
 
     main_tab1, main_tab2 = st.tabs(["➕ Genera Nuova Scheda", "📂 Archivio Schede Salvate"])
 
     with main_tab1:
-        st.write("Programmazione settimanale Elite con spiegazioni iper-dettagliate passo-passo e adattamento logistico perfetto.")
+        st.write("Programmazione settimanale Elite. L'IA fonde i tuoi dati con le metodologie dei migliori allenatori al mondo (Phil Handy, Chip Engelland, ecc.) per garantirti efficienza totale.")
 
         with st.form("coach_form"):
             st.subheader("Parametri del Giocatore e Programmazione")
@@ -256,14 +256,14 @@ else:
                 ruolo = st.selectbox("Ruolo principale", ["Playmaker (PG)", "Guardia (SG)", "Ala Piccola (SF)", "Ala Grande (PF)", "Centro (C)", "Tutti i ruoli"])
                 livello = st.selectbox("Livello di gioco", ["Principiante", "Intermedio", "Avanzato", "Professionista"])
             with col2:
-                obiettivo = st.text_input("Obiettivo preciso (es. primo passo esplosivo, handles, tiro dal palleggio)")
+                obiettivo = st.text_input("Obiettivo preciso (es. primo passo esplosivo, handles, tiro dal palleggio, letture P&R)")
                 frequenza = st.selectbox("Frequenza settimanale", ["1-2 volte", "3-4 volte", "5+ volte"])
                 durata_singola = st.radio("Durata esatta singola sessione:", ["30 minuti", "1 ora", "1 ora e 30", "2 ore", "2 ore e 30", "3 ore"])
                 logistica = st.radio("Logistica di allenamento:", ["Da solo", "In compagnia"])
 
             st.subheader("Film Study & Giocatori Modello")
-            giocatori_simili = st.text_input("A chi ti ispiri? (Separa con virgola. Es: Stephen Curry, Kobe Bryant)", value=st.session_state['giocatori_memoria'])
-            note_extra = st.text_area("Note (es. infortuni, attrezzi a disposizione come coni, pallina da tennis)")
+            giocatori_simili = st.text_input("A chi ti ispiri? (Separa con virgola. Es: Stephen Curry, Kyrie Irving)", value=st.session_state['giocatori_memoria'])
+            note_extra = st.text_area("Note (es. infortuni, attrezzi a disposizione come coni, pallina da tennis, step)")
             
             submit_button = st.form_submit_button(label="Genera Scheda di Allenamento Elite")
 
@@ -276,7 +276,7 @@ else:
             if "3-4" in frequenza: num_giorni = 4
             elif "5+" in frequenza: num_giorni = 5
 
-            with st.spinner("Scansione dei database dei professionisti e dei migliori esercizi sul web..."):
+            with st.spinner("Sincronizzazione con il database dei migliori Master Coach Mondiali e analisi delle metodologie d'élite..."):
                 risultati_youtube = cerca_video_youtube_dettagliati(giocatori_simili, obiettivo)
 
             progress_bar = st.progress(0)
@@ -289,48 +289,60 @@ else:
 
             try:
                 for giorno_idx in range(1, num_giorni + 1):
-                    status_text.text(f"⏳ Elaborazione analitica Giorno {giorno_idx} di {num_giorni}: massimizzazione dei dettagli e controllo ripetizioni...")
+                    status_text.text(f"⏳ Elaborazione analitica Giorno {giorno_idx} di {num_giorni}: applicazione metodologie d'élite e controllo ripetizioni...")
                     
-                    # Memoria dinamica per non ripetere MAI gli stessi esercizi (prende l'ultima porzione cospicua di testo generato)
                     esercizi_gia_inseriti = scheda_completa[-2500:] if giorno_idx > 1 else "Ancora nessun esercizio assegnato."
 
                     prompt_giorno = f"""
-                    Agisci come un Master Coach e Preparatore Atletico NBA di livello mondiale.
-                    Il tuo compito è strutturare il **GIORNO {giorno_idx}** di un programma di allenamento d'élite di {num_giorni} giorni totali.
+                    Agisci come il G.O.A.T. dei Preparatori Atletici e Player Development Coach. Hai assimilato e padroneggi perfettamente le metodologie dei più grandi allenatori al mondo:
+                    - Phil Handy e Micah Lancaster (per il Ball Handling avanzato, decelarazione, footwork e skill acquisition)
+                    - Chip Engelland (per l'efficienza e la biomeccanica del tiro perfetta)
+                    - Gregg Popovich e Steve Kerr (per le letture di gioco, le spaziature e il decision-making)
+                    - Tim Grover e Mike Mancias (per preparazione atletica, forza esplosiva e prevenzione infortuni)
 
-                    DATI DELL'ATLETA DA ANALIZZARE RIGOROSAMENTE:
+                    Il tuo compito è strutturare il **GIORNO {giorno_idx}** di un programma di allenamento di {num_giorni} giorni totali. 
+                    Devi fondere le tue profonde conoscenze metodologiche mondiali con i seguenti DATI DELL'ATLETA:
                     - Nome: {nome} | Età: {eta} | Ruolo: {ruolo} | Livello: {livello}
                     - OBIETTIVO PRINCIPALE: {obiettivo}
                     - DURATA SESSIONE: {durata_singola}
                     - LOGISTICA DI ALLENAMENTO: {logistica}
                     - NOTE E ATTREZZI: {note_extra}
                     - ISPIRAZIONE (Giocatori Modello): {giocatori_simili}
-                    - SPUNTI DAL WEB E DAI PRO: {risultati_youtube}
+                    - SPUNTI DI RICERCA WEB: {risultati_youtube}
 
-                    ISTRUZIONI DI COMPOSIZIONE:
-                    1. ADATTAMENTO LOGISTICO ASSOLUTO: Valuta la logistica richiesta. Se l'utente ha selezionato 'Da solo', NON INSERIRE MAI esercizi che richiedano un compagno, un passatore o un difensore. Ogni drill deve essere 100% eseguibile in solitaria, usando magari tabellone o auto-passaggi se necessario.
+                    ISTRUZIONI E FILOSOFIA DI COMPOSIZIONE:
+                    1. FILOSOFIA D'ÉLITE: Ogni esercizio deve tradursi in partita ("Game-like" e "Game-speed"). Niente esercizi lenti o inutili. Ogni movimento deve avere un fine biomeccanico o situazionale preciso, proprio come insegnano i migliori allenatori della NBA.
                     
-                    2. SELEZIONE ESERCIZI D'ÉLITE E ZERO RIPETIZIONI: Scegli solo gli esercizi più efficaci e moderni. NON ripetere MAI esercizi o varianti banali degli esercizi già assegnati nei giorni precedenti. Varia gli angoli, gli stimoli e la tipologia di lavoro.
-                       Ecco gli esercizi già assegnati nei giorni precedenti (NON REPLICARLI):
+                    2. ADATTAMENTO LOGISTICO ASSOLUTO: Valuta la logistica richiesta. Se l'utente ha selezionato 'Da solo', NON INSERIRE MAI esercizi che richiedano compagni, passatori o difensori. Usa l'auto-passaggio, ostacoli immaginari, coni o tabellone.
+
+                    3. VARIETÀ ASSOLUTA E ZERO RIPETIZIONI: Usa il tuo immenso database di conoscenze per fornire esercizi sempre nuovi. NON ripetere MAI esercizi o varianti banali degli esercizi già assegnati nei giorni precedenti.
+                       Esercizi già assegnati (NON REPLICARLI):
                        {esercizi_gia_inseriti}
 
-                    3. STRUTTURA DELLA SESSIONE: Dividi fluidamente il GIORNO {giorno_idx} in: Riscaldamento & Mobilità, Blocco Tecnico & Signature Drills, Blocco Situazionale & Tiro, Defaticamento & Flex.
+                    4. STRUTTURA DELLA SESSIONE: Dividi fluidamente il GIORNO {giorno_idx} in: Riscaldamento Dinamico & Mobilità, Blocco Tecnico & Signature Drills (es. lavoro di footwork e palla), Blocco Situazionale & Tiro (Game-Speed), Defaticamento & Flex.
 
-                    4. SPIEGAZIONE IPER-DETTAGLIATA (FORMATO OBBLIGATORIO):
-                       Per garantire all'atleta la massima comprensione, per OGNI SINGOLO ESERCIZIO (inclusi riscaldamento e defaticamento) devi usare ESATTAMENTE questo formato:
+                    5. SPIEGAZIONE IPER-DETTAGLIATA (FORMATO OBBLIGATORIO):
+                       Per garantire all'atleta la massima comprensione, per OGNI SINGOLO ESERCIZIO (inclusi riscaldamento e defaticamento) usa ESATTAMENTE questo formato:
                        - **Nome Esercizio:** [Nome chiaro e professionale]
                        - **Durata & Serie:** [Serie | Reps o Tempo | Recupero]
-                       - **🎯 Obiettivo Specifico:** [Analisi tecnica e biomeccanica di cosa si sta migliorando]
-                       - **📖 Esecuzione Passo-Passo:** [Guida estrema: descrivi la postura iniziale, il lavoro esatto dei piedi (footwork), l'uso del baricentro, la posizione delle mani e la gestione del pallone]
-                       - **⚠️ Errori Comuni da Evitare:** [Indica i 2 errori tecnici, posturali o di timing più frequenti e come correggerli]
+                       - **🎯 Obiettivo Specifico e Filosofia:** [Analisi tecnica di cosa si migliora e perché i coach d'élite lo usano]
+                       - **📖 Esecuzione Passo-Passo:** [Guida estrema: postura iniziale, dettagli sul footwork, angoli del corpo, uso della mano off-hand, rilascio]
+                       - **⚠️ Errori Comuni da Evitare:** [Indica i 2 errori tecnici, posturali o di timing più frequenti e come l'allenatore li correggerebbe a bordo campo]
 
-                    IMPORTANTE: Non includere mai link, URL o riferimenti a YouTube nel testo finale.
+                    IMPORTANTE: Non includere mai link, URL o riferimenti a YouTube nel testo finale. Il testo deve sembrare un manuale scritto dal miglior coach del mondo in persona.
                     """
+
+                    system_prompt = (
+                        "Sei un'Intelligenza Artificiale d'élite che incarna i più grandi Player Development Coach e Head Coach "
+                        "nella storia del basket. Genera schede basate su efficienza biomeccanica, game-speed, e game-like situations. "
+                        "Analizza i dati utente con rigore assoluto, applica logistica impeccabile (Da solo = mai compagni) e non "
+                        "ripetere mai gli stessi esercizi."
+                    )
 
                     chat_completion = client.chat.completions.create(
                         model="llama-3.1-8b-instant",
                         messages=[
-                            {"role": "system", "content": "Sei un Master Coach NBA. Genera le schede analizzando con assoluto rigore i parametri logistici e garantendo spiegazioni biomeccaniche iper-dettagliate senza mai ripetere esercizi."},
+                            {"role": "system", "content": system_prompt},
                             {"role": "user", "content": prompt_giorno}
                         ],
                         temperature=0.25,
@@ -341,7 +353,7 @@ else:
                     scheda_completa += f"## 📅 GIORNO {giorno_idx}\n\n" + testo_giorno + "\n\n---\n\n"
                     
                     progress_bar.progress(giorno_idx / num_giorni)
-                    time.sleep(2.5) # Pausa di sicurezza estesa a 2.5 secondi per garantire di evitare per sempre l'errore 413/429
+                    time.sleep(2.5)
 
                 status_text.empty()
                 progress_bar.empty()
@@ -354,7 +366,7 @@ else:
                 st.error(f"Si è verificato un errore durante la generazione: {e}")
 
         if st.session_state['scheda_generata']:
-            st.success("Programmazione Settimanale Completa Generata e Salvata in Archivio!")
+            st.success("Programmazione Settimanale Elite Completata e Salvata in Archivio!")
             st.markdown("---")
             st.markdown(st.session_state['scheda_generata'])
             
