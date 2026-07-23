@@ -270,7 +270,7 @@ else:
 
     client = Groq(api_key=groq_api_key)
 
-    # RICERCA YOUTUBE RIGIDA CON FILTRO DI VALIDITÀ VIDEO
+    # RICERCA YOUTUBE DI SUPPORTO INTERNO PER L'IA
     def cerca_video_youtube_dettagliati(giocatori, obiettivo):
         video_found = []
         queries = []
@@ -286,32 +286,19 @@ else:
 
         for q in queries[:4]:
             try:
-                search = VideosSearch(q, limit=3)
+                search = VideosSearch(q, limit=2)
                 results = search.result().get('result', [])
                 for vid in results:
-                    v_id = vid.get('id')
-                    v_type = vid.get('type', 'video')
-                    title = vid.get('title', 'Tutorial Esercizio Basketball')
-                    views = vid.get('viewCount', {}).get('text', 'Molte visualizzazioni') if isinstance(vid.get('viewCount'), dict) else "Molte visualizzazioni"
-                    
-                    if v_id and v_type == 'video' and v_id != "dQw4w9WgXcQ":
-                        clean_url = f"https://www.youtube.com/watch?v={v_id}"
-                        video_found.append({
-                            "title": title,
-                            "url": clean_url,
-                            "views": views
-                        })
+                    title = vid.get('title', '')
+                    if title:
+                        video_found.append(title)
             except Exception:
                 pass
 
         if not video_found:
-            return "NESSUN VIDEO DISPONIBILE. OMETTI LA RIGA DEI VIDEO SE NON PERTINENTE."
+            return "Nessun esercizio specifico estratto dai video."
 
-        formatted_text = "ELENCO VIDEO DISPONIBILI SU YOUTUBE (UTILIZZA SOLO QUESTI URL SENZA MODIFICARLI):\n"
-        for idx, v in enumerate(video_found, 1):
-            formatted_text += f"{idx}. TITOLO: \"{v['title']}\" | VISUALIZZAZIONI: {v['views']} | URL: {v['url']}\n"
-
-        return formatted_text
+        return "Esercizi e concetti chiave individuati per ispirazione:\n" + "\n".join([f"- {t}" for t in video_found])
 
     # SCHEDE PRINCIPALI DELL'APP
     main_tab1, main_tab2 = st.tabs(["➕ Genera Nuova Scheda", "📂 Archivio Schede Salvate"])
@@ -320,7 +307,7 @@ else:
     # TAB 1: GENERAZIONE NUOVA SCHEDA
     # ------------------------------------------
     with main_tab1:
-        st.write("Programmazione settimanale Elite con calcolo rigoroso del volume.")
+        st.write("Programmazione settimanale Elite con spiegazioni dettagliate passo-passo per ogni esercizio.")
 
         with st.form("coach_form"):
             st.subheader("Parametri del Giocatore e Programmazione")
@@ -349,56 +336,55 @@ else:
             st.session_state['giocatori_memoria'] = giocatori_simili
             st.session_state['nome_atleta_scheda'] = nome
 
-            with st.spinner("Ricerca ed analisi dei video più popolari di basket su YouTube in corso..."):
+            with st.spinner("Analisi interna delle routine di allenamento dei campioni..."):
                 risultati_youtube = cerca_video_youtube_dettagliati(giocatori_simili, obiettivo)
 
-            with st.spinner("L'IA sta costruendo la scheda completa per TUTTI i giorni richiesti..."):
+            with st.spinner("L'IA sta costruendo la scheda con spiegazioni dettagliate per tutti i giorni..."):
                 prompt = f"""
                 Sei un MASTER COACH E PREPARATORE ATLETICO NBA DI LIVELLO MONDIALE.
-                Il tuo compito è creare una programmazione settimanale completa, dove OGNI SINGOLO GIORNO ha lo STESSO IDENTICO livello di dettaglio profondo e rigoroso.
+                Crea una programmazione settimanale completa e iper-dettagliata.
 
-                DATI UTENTE TASSATIVI DA APPLICARE:
+                DATI UTENTE TASSATIVI:
                 - Nome: {nome} | Età: {eta} | Ruolo: {ruolo} | Livello: {livello}
                 - OBIETTIVO PRINCIPALE: {obiettivo}
-                - FREQUENZA SETTIMANALE: {frequenza}  <-- CREA TUTTI I GIORNI PREVISTI!
+                - FREQUENZA SETTIMANALE: {frequenza}  <-- CREA TUTTI I GIORNI PREVISTI (es. Giorno 1, Giorno 2, ecc.)!
                 - DURATA SINGOLA SESSIONE: {durata_singola}
                 - LOGISTICA: {logistica} (Se 'Da solo', VIETATI passaggi e difensori reali)
                 - GIOCATORI MODELLO: {giocatori_simili}
                 - NOTE/ATTREZZI: {note_extra}
 
-                DATABASE VIDEO YOUTUBE VERIFICATI:
+                ISPIRAZIONE TECNICA DAGLI ALLENAMENTI DEI PROFESSIONISTI:
                 {risultati_youtube}
 
-                REGOLE RIGIDISSIME SULLA COMPLETEZZA DEI GIORNI:
+                REGOLE TASSATIVE SUI VIDEO E LINK (IMPORTANTE):
+                - NON inserire NESSUN link, URL o riferimento a video di YouTube nella risposta finale.
+                - Usa i dati sui video esclusivamente come ispirazione interna per scegliere gli esercizi adatti.
 
-                1. PARITÀ ASSOLUTA TRA I GIORNI (TASSATIVO):
-                   Sulla base della frequenza ({frequenza}), devi creare esplicitamente tutte le sezioni (es: "### GIORNO 1", "### GIORNO 2", "### GIORNO 3", "### GIORNO 4").
-                   È SEVERAMENTE VIETATO ridurre i dettagli, riassumere o saltare i campi dal Giorno 2 in poi.
-                   Il Giorno 2, il Giorno 3 e il Giorno 4 devono avere LA STESSA STRUTTURA E LO STESSO NUMERO DI ESERCIZI del Giorno 1. Non scrivere mai "ripeti il giorno 1" o "fai come sopra".
+                REGOLE DI STRUTTURA E SPIEGAZIONE ESTREMA DEGLI ESERCIZI:
 
-                2. VOLUME E DURATA ({durata_singola}):
-                   Ogni singolo giorno deve coprire {durata_singola}.
-                   - Se "2 ore" (120 min), inserisci per OGNI giorno almeno 7-8 esercizi completi divisi tra Riscaldamento, Blocco Signature Drills ({giocatori_simili}), Blocco Situazionale/Tiro ({obiettivo}) e Defaticamento.
+                1. PARITÀ ED ESTENSIONE DEI GIORNI:
+                   Crea esplicitamente tutte le giornate richieste da {frequenza} ("### GIORNO 1", "### GIORNO 2", ecc.).
+                   Non abbreviare o riassumere i giorni successivi al primo. Ogni giorno deve contenere la sua lista completa di esercizi divisi per sezioni (Riscaldamento, Blocco Tecnico/Signature, Blocco Situazionale/Tiro, Defaticamento).
 
-                3. STRUTTURA TASSATIVA PER OGNI ESERCIZIO (IN TUTTI I GIORNI):
-                   Per OGNI esercizio di OGNI giorno devi compilare esattamente questi punti (sii denso, preciso ed essenziale senza fronzoli inutili):
-                   - **Nome Esercizio:** [Nome professionale]
-                   - **Durata & Serie:** [Serie | Reps/Tempo per lato | Recupero]
-                   - **🎯 Cosa allena nello specifico:** [Gesto tecnico/coordinativo preciso]
-                   - **⭐ Perché è stato scelto ("Best of the Best"):** [Motivazione in relazione a {obiettivo} e {giocatori_simili}]
-                   - **⚙️ Spiegazione Biomeccanica e Tecnica:** [Istruzioni su piedi, baricentro, postura e palla]
-                   - **🎥 Video di riferimento:** [Usa un URL esatto dal database + minutaggio. Es: https://www.youtube.com/watch?v=ID_VIDEO&t=90s (Guarda dal minuto 1:30)]
+                2. SPIEGAZIONE DEDICATA ED ESTREMAMENTE CHIARA (VALIDA PER TUTTI GLI ESERCIZI, COMPRESO IL RISCALDAMENTO):
+                   Sia per gli esercizi di riscaldamento/mobilità sia per quelli tecnici o di tiro, NON usare spiegazioni generiche o vaghe. Per OGNI esercizio devi compilare questa struttura:
+
+                   - **Nome Esercizio:** [Nome chiaro e professionale]
+                   - **Durata & Serie:** [Serie | Reps o Tempo | Recupero]
+                   - **🎯 Obiettivo Specifico:** [Spiega esattamente cosa si attiva o si migliora]
+                   - **📖 Esecuzione Passo-Passo:** [Descrivi dettagliatamente come eseguire l'esercizio: postura iniziale, movimento esatto dei piedi (footwork), gestione del baricentro, posizione delle mani e della palla]
+                   - **⚠️ Errori Comuni da Evitare:** [Indica i 2 errori biomeccanici/di esecuzione più frequenti e come prevenirli]
                 """
 
                 try:
                     chat_completion = client.chat.completions.create(
-                        model="llama-3.3-70b-versatile",
+                        model="llama-3.1-8b-instant",
                         messages=[
-                            {"role": "system", "content": "Sei un Master Coach NBA. Mantieni il 100% di dettaglio, completezza e numero di esercizi per TUTTI i giorni della settimana, senza mai sintetizzare o tralasciare i giorni successivi al primo."},
+                            {"role": "system", "content": "Sei un Master Coach NBA. Mantieni il massimo livello di chiarezza e dettaglio esecutivo per ogni esercizio (riscaldamento compreso). NON includere mai link o riferimenti a video di YouTube nella risposta."},
                             {"role": "user", "content": prompt}
                         ],
                         temperature=0.2,
-                        max_tokens=8000
+                        max_tokens=7000
                     )
                     
                     scheda = chat_completion.choices[0].message.content
@@ -413,7 +399,7 @@ else:
 
         # MOSTRA SCHEDA APPENA GENERATA
         if st.session_state['scheda_generata']:
-            st.success("Programmazione Settimanale Elite generata e SALVATA in archivio!")
+            st.success("Programmazione Settimanale Generata e Salvata in Archivio!")
             st.markdown("---")
             st.markdown(st.session_state['scheda_generata'])
             
