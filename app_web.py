@@ -392,7 +392,7 @@ else:
 
                 try:
                     chat_completion = client.chat.completions.create(
-                        model="mixtral-8x7b-32768",
+                        model="llama-3.3-70b-versatile",
                         messages=[
                             {"role": "system", "content": "Sei un Master Coach NBA. Mantieni il 100% di dettaglio, completezza e numero di esercizi per TUTTI i giorni della settimana, senza mai sintetizzare o tralasciare i giorni successivi al primo."},
                             {"role": "user", "content": prompt}
