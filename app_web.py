@@ -22,7 +22,6 @@ st.set_page_config(page_title="AI Basketball Coach PRO", page_icon="🏀", layou
 def init_db():
     conn = sqlite3.connect('utenti_basket.db')
     c = conn.cursor()
-    # Tabella Utenti
     c.execute('''
         CREATE TABLE IF NOT EXISTS users (
             username TEXT PRIMARY KEY,
@@ -31,7 +30,6 @@ def init_db():
             giocatori_salvati TEXT
         )
     ''')
-    # Tabella Storico Schede Salvate
     c.execute('''
         CREATE TABLE IF NOT EXISTS schede (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -75,7 +73,6 @@ def aggiorna_memoria_giocatori(username, giocatori):
     conn.commit()
     conn.close()
 
-# FUNZIONI DATABASE PER LE SCHEDE
 def salva_scheda_db(username, titolo, contenuto):
     conn = sqlite3.connect('utenti_basket.db')
     c = conn.cursor()
@@ -100,7 +97,6 @@ def elimina_scheda_db(scheda_id):
     conn.commit()
     conn.close()
 
-# Inizializza DB e Session State
 init_db()
 
 if 'logged_in' not in st.session_state:
@@ -127,56 +123,16 @@ def pulisci_e_formatta_testo_pdf(testo):
 def genera_pdf_scheda(testo_scheda, nome_utente):
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
-        buffer,
-        pagesize=A4,
-        rightMargin=36,
-        leftMargin=36,
-        topMargin=36,
-        bottomMargin=36
+        buffer, pagesize=A4, rightMargin=36, leftMargin=36, topMargin=36, bottomMargin=36
     )
-    
     styles = getSampleStyleSheet()
     
-    title_style = ParagraphStyle(
-        'DocTitle',
-        parent=styles['Heading1'],
-        fontSize=18,
-        leading=22,
-        textColor=colors.HexColor('#1E3A8A'),
-        spaceAfter=10
-    )
-    
-    h2_style = ParagraphStyle(
-        'SectionH2',
-        parent=styles['Heading2'],
-        fontSize=14,
-        leading=18,
-        textColor=colors.HexColor('#1E3A8A'),
-        spaceBefore=12,
-        spaceAfter=6
-    )
-
-    h3_style = ParagraphStyle(
-        'SectionH3',
-        parent=styles['Heading3'],
-        fontSize=12,
-        leading=16,
-        textColor=colors.HexColor('#2563EB'),
-        spaceBefore=10,
-        spaceAfter=4
-    )
-    
-    body_style = ParagraphStyle(
-        'BodyTextCustom',
-        parent=styles['Normal'],
-        fontSize=10,
-        leading=14,
-        textColor=colors.HexColor('#1F2937'),
-        spaceAfter=4
-    )
+    title_style = ParagraphStyle('DocTitle', parent=styles['Heading1'], fontSize=18, leading=22, textColor=colors.HexColor('#1E3A8A'), spaceAfter=10)
+    h2_style = ParagraphStyle('SectionH2', parent=styles['Heading2'], fontSize=14, leading=18, textColor=colors.HexColor('#1E3A8A'), spaceBefore=12, spaceAfter=6)
+    h3_style = ParagraphStyle('SectionH3', parent=styles['Heading3'], fontSize=12, leading=16, textColor=colors.HexColor('#2563EB'), spaceBefore=10, spaceAfter=4)
+    body_style = ParagraphStyle('BodyTextCustom', parent=styles['Normal'], fontSize=10, leading=14, textColor=colors.HexColor('#1F2937'), spaceAfter=4)
 
     story = []
-    
     story.append(Paragraph("<b>AI BASKETBALL COACH PRO - SCHEDA UFFICIALE</b>", title_style))
     story.append(Paragraph(f"<b>Atleta:</b> {html.escape(nome_utente)}", body_style))
     story.append(HRFlowable(width="100%", thickness=1.5, color=colors.HexColor('#1E3A8A'), spaceBefore=6, spaceAfter=12))
@@ -189,19 +145,15 @@ def genera_pdf_scheda(testo_scheda, nome_utente):
             continue
             
         if riga_str.startswith('### '):
-            testo_f = pulisci_e_formatta_testo_pdf(riga_str.replace('### ', ''))
-            story.append(Paragraph(testo_f, h3_style))
+            story.append(Paragraph(pulisci_e_formatta_testo_pdf(riga_str.replace('### ', '')), h3_style))
         elif riga_str.startswith('## '):
-            testo_f = pulisci_e_formatta_testo_pdf(riga_str.replace('## ', ''))
-            story.append(Paragraph(testo_f, h2_style))
+            story.append(Paragraph(pulisci_e_formatta_testo_pdf(riga_str.replace('## ', '')), h2_style))
         elif riga_str.startswith('# '):
-            testo_f = pulisci_e_formatta_testo_pdf(riga_str.replace('# ', ''))
-            story.append(Paragraph(testo_f, title_style))
+            story.append(Paragraph(pulisci_e_formatta_testo_pdf(riga_str.replace('# ', '')), title_style))
         elif riga_str.startswith('---'):
             story.append(HRFlowable(width="100%", thickness=0.5, color=colors.gray, spaceBefore=6, spaceAfter=6))
         else:
-            testo_f = pulisci_e_formatta_testo_pdf(riga_str)
-            story.append(Paragraph(testo_f, body_style))
+            story.append(Paragraph(pulisci_e_formatta_testo_pdf(riga_str), body_style))
             
     doc.build(story)
     buffer.seek(0)
@@ -220,9 +172,6 @@ if not st.session_state['logged_in']:
         st.subheader("Fai il Login")
         log_user = st.text_input("Username", key="log_user")
         log_pass = st.text_input("Password", type="password", key="log_pass")
-        
-        st.info("💡 L'accesso sociale (Google, Apple, SMS) sarà integrabile via cloud authentication.")
-        
         if st.button("Accedi"):
             user_data = login_utente(log_user, log_pass)
             if user_data:
@@ -239,11 +188,9 @@ if not st.session_state['logged_in']:
         reg_user = st.text_input("Scegli un Username Unico")
         reg_email = st.text_input("Email")
         reg_pass = st.text_input("Scegli una Password", type="password")
-            
         if st.button("Crea Account"):
             if reg_user and reg_pass:
-                successo = crea_utente(reg_user, reg_pass, reg_email)
-                if successo:
+                if crea_utente(reg_user, reg_pass, reg_email):
                     st.success("Account creato con successo! Ora puoi fare il login.")
                 else:
                     st.error("⚠️ Questo Username è già in uso! Scegline un altro.")
@@ -271,17 +218,13 @@ else:
 
     client = Groq(api_key=groq_api_key)
 
-    # RICERCA YOUTUBE DI SUPPORTO INTERNO PER L'IA
     def cerca_video_youtube_dettagliati(giocatori, obiettivo):
         video_found = []
         queries = []
-        
         lista_g = [g.strip() for g in giocatori.split(',') if g.strip()]
-        
         for g in lista_g:
             queries.append(f"{g} basketball drill breakdown")
             queries.append(f"{g} basketball workout tutorial")
-
         if obiettivo:
             queries.append(f"best basketball {obiettivo} drill tutorial")
 
@@ -290,38 +233,30 @@ else:
                 search = VideosSearch(q, limit=2)
                 results = search.result().get('result', [])
                 for vid in results:
-                    title = vid.get('title', '')
-                    if title:
-                        video_found.append(title)
+                    if vid.get('title', ''):
+                        video_found.append(vid.get('title'))
             except Exception:
                 pass
 
         if not video_found:
-            return "Nessun esercizio specifico estratto dai video."
+            return "Nessun esercizio specifico estratto dal web, procedi con la tua conoscenza di Master Coach."
+        return "Esercizi e concetti chiave individuati per ispirazione dal web:\n" + "\n".join([f"- {t}" for t in video_found])
 
-        return "Esercizi e concetti chiave individuati per ispirazione:\n" + "\n".join([f"- {t}" for t in video_found])
-
-    # SCHEDE PRINCIPALI DELL'APP
     main_tab1, main_tab2 = st.tabs(["➕ Genera Nuova Scheda", "📂 Archivio Schede Salvate"])
 
-    # ------------------------------------------
-    # TAB 1: GENERAZIONE NUOVA SCHEDA
-    # ------------------------------------------
     with main_tab1:
-        st.write("Programmazione settimanale Elite con spiegazioni dettagliate passo-passo per ogni esercizio.")
+        st.write("Programmazione settimanale Elite con spiegazioni iper-dettagliate passo-passo e adattamento logistico perfetto.")
 
         with st.form("coach_form"):
             st.subheader("Parametri del Giocatore e Programmazione")
             col1, col2 = st.columns(2)
-            
             with col1:
                 nome = st.text_input("Nome del giocatore", value=st.session_state['username'])
                 eta = st.number_input("Età", min_value=5, max_value=60, value=18)
                 ruolo = st.selectbox("Ruolo principale", ["Playmaker (PG)", "Guardia (SG)", "Ala Piccola (SF)", "Ala Grande (PF)", "Centro (C)", "Tutti i ruoli"])
                 livello = st.selectbox("Livello di gioco", ["Principiante", "Intermedio", "Avanzato", "Professionista"])
-            
             with col2:
-                obiettivo = st.text_input("Obiettivo preciso (es. primo passo esplosivo, handles/palleggio, tiro dal palleggio)")
+                obiettivo = st.text_input("Obiettivo preciso (es. primo passo esplosivo, handles, tiro dal palleggio)")
                 frequenza = st.selectbox("Frequenza settimanale", ["1-2 volte", "3-4 volte", "5+ volte"])
                 durata_singola = st.radio("Durata esatta singola sessione:", ["30 minuti", "1 ora", "1 ora e 30", "2 ore", "2 ore e 30", "3 ore"])
                 logistica = st.radio("Logistica di allenamento:", ["Da solo", "In compagnia"])
@@ -337,14 +272,11 @@ else:
             st.session_state['giocatori_memoria'] = giocatori_simili
             st.session_state['nome_atleta_scheda'] = nome
 
-            # Determina il numero di giorni in base alla frequenza
             num_giorni = 2
-            if "3-4" in frequenza:
-                num_giorni = 4
-            elif "5+" in frequenza:
-                num_giorni = 5
+            if "3-4" in frequenza: num_giorni = 4
+            elif "5+" in frequenza: num_giorni = 5
 
-            with st.spinner("Analisi dei migliori esercizi del web e dei professionisti..."):
+            with st.spinner("Scansione dei database dei professionisti e dei migliori esercizi sul web..."):
                 risultati_youtube = cerca_video_youtube_dettagliati(giocatori_simili, obiettivo)
 
             progress_bar = st.progress(0)
@@ -357,55 +289,48 @@ else:
 
             try:
                 for giorno_idx in range(1, num_giorni + 1):
-                    status_text.text(f"⏳ Elaborazione analitica Giorno {giorno_idx} di {num_giorni} con esercizi d'élite e zero ripetizioni...")
+                    status_text.text(f"⏳ Elaborazione analitica Giorno {giorno_idx} di {num_giorni}: massimizzazione dei dettagli e controllo ripetizioni...")
                     
-                    # Estratto di quanto già generato per evitare ripetizioni
-                    esercizi_gia_inseriti = scheda_completa[-2000:] if giorno_idx > 1 else "Nessuno ancora."
+                    # Memoria dinamica per non ripetere MAI gli stessi esercizi (prende l'ultima porzione cospicua di testo generato)
+                    esercizi_gia_inseriti = scheda_completa[-2500:] if giorno_idx > 1 else "Ancora nessun esercizio assegnato."
 
                     prompt_giorno = f"""
-                    Sei un Master Coach e Preparatore Atletico NBA di livello mondiale.
-                    Genera la scheda dettagliata per il **GIORNO {giorno_idx}** di una programmazione di {num_giorni} giorni totali.
+                    Agisci come un Master Coach e Preparatore Atletico NBA di livello mondiale.
+                    Il tuo compito è strutturare il **GIORNO {giorno_idx}** di un programma di allenamento d'élite di {num_giorni} giorni totali.
 
-                    PRIMA DI SCEGLIERE GLI ESERCIZI, ANALIZZA E RISPETTA RIGOROSAMENTE TUTTI I DATI INSERITI DALL'UTENTE:
+                    DATI DELL'ATLETA DA ANALIZZARE RIGOROSAMENTE:
                     - Nome: {nome} | Età: {eta} | Ruolo: {ruolo} | Livello: {livello}
                     - OBIETTIVO PRINCIPALE: {obiettivo}
                     - DURATA SESSIONE: {durata_singola}
                     - LOGISTICA DI ALLENAMENTO: {logistica}
-                    - NOTE E ATTREZZI A DISPOSIZIONE: {note_extra}
-                    - GIOCATORI MODELLO: {giocatori_simili}
-                    - SPUNTI DAI MIGLIORI ALLENATORI DEL WEB: {risultati_youtube}
+                    - NOTE E ATTREZZI: {note_extra}
+                    - ISPIRAZIONE (Giocatori Modello): {giocatori_simili}
+                    - SPUNTI DAL WEB E DAI PRO: {risultati_youtube}
 
                     ISTRUZIONI DI COMPOSIZIONE:
-                    1. ADATTAMENTO LOGISTICO ASSOLUTO:
-                       Se la logistica è 'Da solo', è vietato qualsiasi esercizio che richieda un compagno, un passatore o difensori reali. Tutti i drill devono essere fattibili al 100% in autonomia individuale.
-
-                    2. MASSIMA VARIETÀ ED ESERCIZI D'ÉLITE (ZERO RIPETIZIONI):
-                       Attingi ai migliori esercizi di allenamento per il basket esistenti sul web e usati dai professionisti.
-                       NON ripetere MAI gli stessi esercizi o varianti identiche tra i diversi giorni o nella stessa sessione.
-                       Esercizi già assegnati nei giorni precedenti (NON REPLICARLI):
+                    1. ADATTAMENTO LOGISTICO ASSOLUTO: Valuta la logistica richiesta. Se l'utente ha selezionato 'Da solo', NON INSERIRE MAI esercizi che richiedano un compagno, un passatore o un difensore. Ogni drill deve essere 100% eseguibile in solitaria, usando magari tabellone o auto-passaggi se necessario.
+                    
+                    2. SELEZIONE ESERCIZI D'ÉLITE E ZERO RIPETIZIONI: Scegli solo gli esercizi più efficaci e moderni. NON ripetere MAI esercizi o varianti banali degli esercizi già assegnati nei giorni precedenti. Varia gli angoli, gli stimoli e la tipologia di lavoro.
+                       Ecco gli esercizi già assegnati nei giorni precedenti (NON REPLICARLI):
                        {esercizi_gia_inseriti}
 
-                    3. STRUTTURA DEL GIORNO {giorno_idx}:
-                       Organizza la sessione in queste 4 sezioni chiare:
-                       - Riscaldamento & Mobilità
-                       - Blocco Tecnico & Signature Drills
-                       - Blocco Situazionale & Tiro
-                       - Defaticamento & Flex
+                    3. STRUTTURA DELLA SESSIONE: Dividi fluidamente il GIORNO {giorno_idx} in: Riscaldamento & Mobilità, Blocco Tecnico & Signature Drills, Blocco Situazionale & Tiro, Defaticamento & Flex.
 
-                    4. SPIEGAZIONE DETTAGLIATA E PRECISA (Da applicare ad OGNI singolo esercizio, inclusi riscaldamento e defaticamento):
-                       Non inserire alcun URL o link web nel testo.
-                       Per ogni esercizio adotta esattamente questo formato:
+                    4. SPIEGAZIONE IPER-DETTAGLIATA (FORMATO OBBLIGATORIO):
+                       Per garantire all'atleta la massima comprensione, per OGNI SINGOLO ESERCIZIO (inclusi riscaldamento e defaticamento) devi usare ESATTAMENTE questo formato:
                        - **Nome Esercizio:** [Nome chiaro e professionale]
                        - **Durata & Serie:** [Serie | Reps o Tempo | Recupero]
-                       - **🎯 Obiettivo Specifico:** [Cosa si allena in dettaglio]
-                       - **📖 Esecuzione Passo-Passo:** [Descrizione della postura, lavoro dei piedi/footwork, gestione del baricentro e controllo palla]
-                       - **⚠️ Errori Comuni da Evitare:** [I 2 errori tecnici più frequenti]
+                       - **🎯 Obiettivo Specifico:** [Analisi tecnica e biomeccanica di cosa si sta migliorando]
+                       - **📖 Esecuzione Passo-Passo:** [Guida estrema: descrivi la postura iniziale, il lavoro esatto dei piedi (footwork), l'uso del baricentro, la posizione delle mani e la gestione del pallone]
+                       - **⚠️ Errori Comuni da Evitare:** [Indica i 2 errori tecnici, posturali o di timing più frequenti e come correggerli]
+
+                    IMPORTANTE: Non includere mai link, URL o riferimenti a YouTube nel testo finale.
                     """
 
                     chat_completion = client.chat.completions.create(
                         model="llama-3.1-8b-instant",
                         messages=[
-                            {"role": "system", "content": f"Sei un Master Coach NBA. Genera il GIORNO {giorno_idx} analizzando accuratamente i dati dell'utente, assicurando la massima varietà ed escludendo qualsiasi link o ripetizione."},
+                            {"role": "system", "content": "Sei un Master Coach NBA. Genera le schede analizzando con assoluto rigore i parametri logistici e garantendo spiegazioni biomeccaniche iper-dettagliate senza mai ripetere esercizi."},
                             {"role": "user", "content": prompt_giorno}
                         ],
                         temperature=0.25,
@@ -416,21 +341,18 @@ else:
                     scheda_completa += f"## 📅 GIORNO {giorno_idx}\n\n" + testo_giorno + "\n\n---\n\n"
                     
                     progress_bar.progress(giorno_idx / num_giorni)
-                    time.sleep(1)
+                    time.sleep(2.5) # Pausa di sicurezza estesa a 2.5 secondi per garantire di evitare per sempre l'errore 413/429
 
                 status_text.empty()
                 progress_bar.empty()
-
                 st.session_state['scheda_generata'] = scheda_completa
 
-                # SALVATAGGIO AUTOMATICO NEL DATABASE
                 titolo_scheda = f"Scheda {obiettivo} ({frequenza} - {durata_singola})"
                 salva_scheda_db(st.session_state['username'], titolo_scheda, scheda_completa)
 
             except Exception as e:
                 st.error(f"Si è verificato un errore durante la generazione: {e}")
 
-        # MOSTRA SCHEDA APPENA GENERATA
         if st.session_state['scheda_generata']:
             st.success("Programmazione Settimanale Completa Generata e Salvata in Archivio!")
             st.markdown("---")
@@ -449,9 +371,6 @@ else:
                 mime="application/pdf"
             )
 
-    # ------------------------------------------
-    # TAB 2: ARCHIVIO SCHEDE SALVATE NEL DATABASE
-    # ------------------------------------------
     with main_tab2:
         st.subheader("📂 Il tuo Archivio Personalizzato di Schede Salvate")
         st.write("Qui trovi tutte le schede generate precedentemente. Puoi rileggerle, scaricare i relativi PDF o eliminarle.")
