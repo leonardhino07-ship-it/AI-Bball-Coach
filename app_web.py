@@ -7,6 +7,7 @@ import io
 import re
 import html
 import datetime
+import time
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, HRFlowable
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -284,7 +285,7 @@ else:
         if obiettivo:
             queries.append(f"best basketball {obiettivo} drill tutorial")
 
-        for q in queries[:4]:
+        for q in queries[:3]:
             try:
                 search = VideosSearch(q, limit=2)
                 results = search.result().get('result', [])
@@ -336,70 +337,88 @@ else:
             st.session_state['giocatori_memoria'] = giocatori_simili
             st.session_state['nome_atleta_scheda'] = nome
 
-            with st.spinner("Analisi interna delle routine di allenamento dei campioni..."):
+            # Determina il numero di giorni in base alla frequenza
+            num_giorni = 2
+            if "3-4" in frequenza:
+                num_giorni = 4
+            elif "5+" in frequenza:
+                num_giorni = 5
+
+            with st.spinner("Analisi interna delle routine dei campioni..."):
                 risultati_youtube = cerca_video_youtube_dettagliati(giocatori_simili, obiettivo)
 
-            with st.spinner("L'IA sta costruendo la scheda con spiegazioni dettagliate per tutti i giorni..."):
-                prompt = f"""
-                Sei un MASTER COACH E PREPARATORE ATLETICO NBA DI LIVELLO MONDIALE.
-                Crea una programmazione settimanale completa e iper-dettagliata.
+            progress_bar = st.progress(0)
+            status_text = st.empty()
 
-                DATI UTENTE TASSATIVI:
-                - Nome: {nome} | Età: {eta} | Ruolo: {ruolo} | Livello: {livello}
-                - OBIETTIVO PRINCIPALE: {obiettivo}
-                - FREQUENZA SETTIMANALE: {frequenza}  <-- CREA TUTTI I GIORNI PREVISTI (es. Giorno 1, Giorno 2, ecc.)!
-                - DURATA SINGOLA SESSIONE: {durata_singola}
-                - LOGISTICA: {logistica} (Se 'Da solo', VIETATI passaggi e difensori reali)
-                - GIOCATORI MODELLO: {giocatori_simili}
-                - NOTE/ATTREZZI: {note_extra}
+            scheda_completa = f"# 🏀 PROGRAMMAZIONE SETTIMANALE ELITE - {nome.upper()}\n"
+            scheda_completa += f"**Ruolo:** {ruolo} | **Livello:** {livello} | **Obiettivo:** {obiettivo}\n"
+            scheda_completa += f"**Frequenza:** {frequenza} ({num_giorni} giorni di lavoro) | **Durata Sessione:** {durata_singola}\n"
+            scheda_completa += f"**Ispirazione:** {giocatori_simili}\n\n---\n\n"
 
-                ISPIRAZIONE TECNICA DAGLI ALLENAMENTI DEI PROFESSIONISTI:
-                {risultati_youtube}
+            try:
+                for giorno_idx in range(1, num_giorni + 1):
+                    status_text.text(f"⏳ Generazione in corso: Giorno {giorno_idx} di {num_giorni} con massima precisione...")
+                    
+                    prompt_giorno = f"""
+                    Sei un MASTER COACH E PREPARATORE ATLETICO NBA DI LIVELLO MONDIALE.
+                    Genera la scheda iper-dettagliata per il **GIORNO {giorno_idx}** di una programmazione di {num_giorni} giorni totali.
 
-                REGOLE TASSATIVE SUI VIDEO E LINK (IMPORTANTE):
-                - NON inserire NESSUN link, URL o riferimento a video di YouTube nella risposta finale.
-                - Usa i dati sui video esclusivamente come ispirazione interna per scegliere gli esercizi adatti.
+                    DATI GIOCATORE:
+                    - Nome: {nome} | Età: {eta} | Ruolo: {ruolo} | Livello: {livello}
+                    - OBIETTIVO PRINCIPALE: {obiettivo}
+                    - DURATA SESSIONE: {durata_singola}
+                    - LOGISTICA: {logistica} (Se 'Da solo', VIETATI passaggi o difensori reali)
+                    - NOTE/ATTREZZI: {note_extra}
+                    - ISPIRAZIONE PROFESSIONISTI: {risultati_youtube}
 
-                REGOLE DI STRUTTURA E SPIEGAZIONE ESTREMA DEGLI ESERCIZI:
+                    REGOLE TASSATIVE:
+                    1. NON inserire NESSUN link, URL o riferimento a video di YouTube.
+                    2. Struttura il lavoro del GIORNO {giorno_idx} nelle sezioni:
+                       - Riscaldamento & Mobilità
+                       - Blocco Tecnico & Signature Drills
+                       - Blocco Situazionale & Tiro
+                       - Defaticamento & Flex
 
-                1. PARITÀ ED ESTENSIONE DEI GIORNI:
-                   Crea esplicitamente tutte le giornate richieste da {frequenza} ("### GIORNO 1", "### GIORNO 2", ecc.).
-                   Non abbreviare o riassumere i giorni successivi al primo. Ogni giorno deve contenere la sua lista completa di esercizi divisi per sezioni (Riscaldamento, Blocco Tecnico/Signature, Blocco Situazionale/Tiro, Defaticamento).
+                    3. PER OGNI SINGOLO ESERCIZIO (incluso il riscaldamento e defaticamento), devi usare QUESTA STRUTTURA DETTAGLIATA:
+                       - **Nome Esercizio:** [Nome chiaro e professionale]
+                       - **Durata & Serie:** [Serie | Reps o Tempo | Recupero]
+                       - **🎯 Obiettivo Specifico:** [Cosa attiva o migliora]
+                       - **📖 Esecuzione Passo-Passo:** [Spiegazione approfondita: postura iniziale, lavoro dei piedi/footwork, gestione del baricentro, posizione delle mani e della palla]
+                       - **⚠️ Errori Comuni da Evitare:** [Indica i 2 errori biomeccanici/di esecuzione più frequenti]
+                    """
 
-                2. SPIEGAZIONE DEDICATA ED ESTREMAMENTE CHIARA (VALIDA PER TUTTI GLI ESERCIZI, COMPRESO IL RISCALDAMENTO):
-                   Sia per gli esercizi di riscaldamento/mobilità sia per quelli tecnici o di tiro, NON usare spiegazioni generiche o vaghe. Per OGNI esercizio devi compilare questa struttura:
-
-                   - **Nome Esercizio:** [Nome chiaro e professionale]
-                   - **Durata & Serie:** [Serie | Reps o Tempo | Recupero]
-                   - **🎯 Obiettivo Specifico:** [Spiega esattamente cosa si attiva o si migliora]
-                   - **📖 Esecuzione Passo-Passo:** [Descrivi dettagliatamente come eseguire l'esercizio: postura iniziale, movimento esatto dei piedi (footwork), gestione del baricentro, posizione delle mani e della palla]
-                   - **⚠️ Errori Comuni da Evitare:** [Indica i 2 errori biomeccanici/di esecuzione più frequenti e come prevenirli]
-                """
-
-                try:
                     chat_completion = client.chat.completions.create(
                         model="llama-3.1-8b-instant",
                         messages=[
-                            {"role": "system", "content": "Sei un Master Coach NBA. Mantieni il massimo livello di chiarezza e dettaglio esecutivo per ogni esercizio (riscaldamento compreso). NON includere mai link o riferimenti a video di YouTube nella risposta."},
-                            {"role": "user", "content": prompt}
+                            {"role": "system", "content": f"Sei un Master Coach NBA. Genera il GIORNO {giorno_idx} fornendo la massima precisione esecutiva per ogni esercizio. NON includere mai link a YouTube."},
+                            {"role": "user", "content": prompt_giorno}
                         ],
                         temperature=0.2,
-                        max_tokens=7000
+                        max_tokens=2200
                     )
+
+                    testo_giorno = chat_completion.choices[0].message.content
+                    scheda_completa += f"## 📅 GIORNO {giorno_idx}\n\n" + testo_giorno + "\n\n---\n\n"
                     
-                    scheda = chat_completion.choices[0].message.content
-                    st.session_state['scheda_generata'] = scheda
-                    
-                    # SALVATAGGIO AUTOMATICO NEL DATABASE
-                    titolo_scheda = f"Scheda {obiettivo} ({frequenza} - {durata_singola})"
-                    salva_scheda_db(st.session_state['username'], titolo_scheda, scheda)
-                    
-                except Exception as e:
-                    st.error(f"Si è verificato un errore: {e}")
+                    # Aggiorna barra di avanzamento e attendi 1 secondo per il rispetto dei rate-limit
+                    progress_bar.progress(giorno_idx / num_giorni)
+                    time.sleep(1)
+
+                status_text.empty()
+                progress_bar.empty()
+
+                st.session_state['scheda_generata'] = scheda_completa
+
+                # SALVATAGGIO AUTOMATICO NEL DATABASE
+                titolo_scheda = f"Scheda {obiettivo} ({frequenza} - {durata_singola})"
+                salva_scheda_db(st.session_state['username'], titolo_scheda, scheda_completa)
+
+            except Exception as e:
+                st.error(f"Si è verificato un errore durante la generazione: {e}")
 
         # MOSTRA SCHEDA APPENA GENERATA
         if st.session_state['scheda_generata']:
-            st.success("Programmazione Settimanale Generata e Salvata in Archivio!")
+            st.success("Programmazione Settimanale Completa Generata e Salvata in Archivio!")
             st.markdown("---")
             st.markdown(st.session_state['scheda_generata'])
             
@@ -410,7 +429,7 @@ else:
             pdf_bytes = genera_pdf_scheda(st.session_state['scheda_generata'], nome_file)
             
             st.download_button(
-                label="📥 Scarica Scheda in PDF",
+                label="📥 Scarica Scheda Completa in PDF",
                 data=pdf_bytes,
                 file_name=f"Scheda_Basketball_{nome_file.replace(' ', '_')}.pdf",
                 mime="application/pdf"
