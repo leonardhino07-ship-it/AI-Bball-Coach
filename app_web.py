@@ -344,7 +344,7 @@ else:
             elif "5+" in frequenza:
                 num_giorni = 5
 
-            with st.spinner("Analisi interna delle routine dei campioni..."):
+            with st.spinner("Analisi dei migliori esercizi del web e dei professionisti..."):
                 risultati_youtube = cerca_video_youtube_dettagliati(giocatori_simili, obiettivo)
 
             progress_bar = st.progress(0)
@@ -352,55 +352,69 @@ else:
 
             scheda_completa = f"# 🏀 PROGRAMMAZIONE SETTIMANALE ELITE - {nome.upper()}\n"
             scheda_completa += f"**Ruolo:** {ruolo} | **Livello:** {livello} | **Obiettivo:** {obiettivo}\n"
-            scheda_completa += f"**Frequenza:** {frequenza} ({num_giorni} giorni di lavoro) | **Durata Sessione:** {durata_singola}\n"
+            scheda_completa += f"**Frequenza:** {frequenza} ({num_giorni} giorni di lavoro) | **Durata Sessione:** {durata_singola} | **Modalità:** {logistica}\n"
             scheda_completa += f"**Ispirazione:** {giocatori_simili}\n\n---\n\n"
 
             try:
                 for giorno_idx in range(1, num_giorni + 1):
-                    status_text.text(f"⏳ Generazione in corso: Giorno {giorno_idx} di {num_giorni} con massima precisione...")
+                    status_text.text(f"⏳ Elaborazione analitica Giorno {giorno_idx} di {num_giorni} con esercizi d'élite e zero ripetizioni...")
                     
-                    prompt_giorno = f"""
-                    Sei un MASTER COACH E PREPARATORE ATLETICO NBA DI LIVELLO MONDIALE.
-                    Genera la scheda iper-dettagliata per il **GIORNO {giorno_idx}** di una programmazione di {num_giorni} giorni totali.
+                    # Estratto di quanto già generato per evitare ripetizioni
+                    esercizi_gia_inseriti = scheda_completa[-2000:] if giorno_idx > 1 else "Nessuno ancora."
 
-                    DATI GIOCATORE:
+                    prompt_giorno = f"""
+                    Sei un Master Coach e Preparatore Atletico NBA di livello mondiale.
+                    Genera la scheda dettagliata per il **GIORNO {giorno_idx}** di una programmazione di {num_giorni} giorni totali.
+
+                    PRIMA DI SCEGLIERE GLI ESERCIZI, ANALIZZA E RISPETTA RIGOROSAMENTE TUTTI I DATI INSERITI DALL'UTENTE:
                     - Nome: {nome} | Età: {eta} | Ruolo: {ruolo} | Livello: {livello}
                     - OBIETTIVO PRINCIPALE: {obiettivo}
                     - DURATA SESSIONE: {durata_singola}
-                    - LOGISTICA: {logistica} (Se 'Da solo', VIETATI passaggi o difensori reali)
-                    - NOTE/ATTREZZI: {note_extra}
-                    - ISPIRAZIONE PROFESSIONISTI: {risultati_youtube}
+                    - LOGISTICA DI ALLENAMENTO: {logistica}
+                    - NOTE E ATTREZZI A DISPOSIZIONE: {note_extra}
+                    - GIOCATORI MODELLO: {giocatori_simili}
+                    - SPUNTI DAI MIGLIORI ALLENATORI DEL WEB: {risultati_youtube}
 
-                    REGOLE TASSATIVE:
-                    1. NON inserire NESSUN link, URL o riferimento a video di YouTube.
-                    2. Struttura il lavoro del GIORNO {giorno_idx} nelle sezioni:
+                    ISTRUZIONI DI COMPOSIZIONE:
+                    1. ADATTAMENTO LOGISTICO ASSOLUTO:
+                       Se la logistica è 'Da solo', è vietato qualsiasi esercizio che richieda un compagno, un passatore o difensori reali. Tutti i drill devono essere fattibili al 100% in autonomia individuale.
+
+                    2. MASSIMA VARIETÀ ED ESERCIZI D'ÉLITE (ZERO RIPETIZIONI):
+                       Attingi ai migliori esercizi di allenamento per il basket esistenti sul web e usati dai professionisti.
+                       NON ripetere MAI gli stessi esercizi o varianti identiche tra i diversi giorni o nella stessa sessione.
+                       Esercizi già assegnati nei giorni precedenti (NON REPLICARLI):
+                       {esercizi_gia_inseriti}
+
+                    3. STRUTTURA DEL GIORNO {giorno_idx}:
+                       Organizza la sessione in queste 4 sezioni chiare:
                        - Riscaldamento & Mobilità
                        - Blocco Tecnico & Signature Drills
                        - Blocco Situazionale & Tiro
                        - Defaticamento & Flex
 
-                    3. PER OGNI SINGOLO ESERCIZIO (incluso il riscaldamento e defaticamento), devi usare QUESTA STRUTTURA DETTAGLIATA:
+                    4. SPIEGAZIONE DETTAGLIATA E PRECISA (Da applicare ad OGNI singolo esercizio, inclusi riscaldamento e defaticamento):
+                       Non inserire alcun URL o link web nel testo.
+                       Per ogni esercizio adotta esattamente questo formato:
                        - **Nome Esercizio:** [Nome chiaro e professionale]
                        - **Durata & Serie:** [Serie | Reps o Tempo | Recupero]
-                       - **🎯 Obiettivo Specifico:** [Cosa attiva o migliora]
-                       - **📖 Esecuzione Passo-Passo:** [Spiegazione approfondita: postura iniziale, lavoro dei piedi/footwork, gestione del baricentro, posizione delle mani e della palla]
-                       - **⚠️ Errori Comuni da Evitare:** [Indica i 2 errori biomeccanici/di esecuzione più frequenti]
+                       - **🎯 Obiettivo Specifico:** [Cosa si allena in dettaglio]
+                       - **📖 Esecuzione Passo-Passo:** [Descrizione della postura, lavoro dei piedi/footwork, gestione del baricentro e controllo palla]
+                       - **⚠️ Errori Comuni da Evitare:** [I 2 errori tecnici più frequenti]
                     """
 
                     chat_completion = client.chat.completions.create(
                         model="llama-3.1-8b-instant",
                         messages=[
-                            {"role": "system", "content": f"Sei un Master Coach NBA. Genera il GIORNO {giorno_idx} fornendo la massima precisione esecutiva per ogni esercizio. NON includere mai link a YouTube."},
+                            {"role": "system", "content": f"Sei un Master Coach NBA. Genera il GIORNO {giorno_idx} analizzando accuratamente i dati dell'utente, assicurando la massima varietà ed escludendo qualsiasi link o ripetizione."},
                             {"role": "user", "content": prompt_giorno}
                         ],
-                        temperature=0.2,
+                        temperature=0.25,
                         max_tokens=2200
                     )
 
                     testo_giorno = chat_completion.choices[0].message.content
                     scheda_completa += f"## 📅 GIORNO {giorno_idx}\n\n" + testo_giorno + "\n\n---\n\n"
                     
-                    # Aggiorna barra di avanzamento e attendi 1 secondo per il rispetto dei rate-limit
                     progress_bar.progress(giorno_idx / num_giorni)
                     time.sleep(1)
 
