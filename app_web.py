@@ -19,7 +19,7 @@ from reportlab.lib import colors
 # ==========================================
 st.set_page_config(page_title="Basketball Coach PRO", layout="wide")
 
-# CSS minimalista, pulito e ottimizzato per smartphone (zero fronzoli, zero emoji)
+# CSS minimalista, pulito e ottimizzato per smartphone
 st.markdown("""
 <style>
     .stApp {
@@ -372,6 +372,13 @@ else:
 
             errore_generazione = False
 
+            # GESTIONE DINAMICA E TASSATIVA DELLA LOGISTICA
+            vincolo_logistica = ""
+            if logistica == "Da solo":
+                vincolo_logistica = "REGOLA LOGISTICA INVALICABILE: L'ATLETA SI ALLENA TOTALMENTE DA SOLO. E' FISICAMENTE IMPOSSIBILE AVERE UN COMPAGNO O UN COACH SUL CAMPO. È ASSOLUTAMENTE VIETATO INSERIRE ESERCIZI CHE RICHIEDANO PASSATORI O DIFENSORI REALI. SOSTITUISCI I COMPAGNI ESCLUSIVAMENTE CON SEDIE, CONI, AUTO-PASSAGGI CON EFFETTO SUL PARQUET O USO DEL TABELLONE."
+            else:
+                vincolo_logistica = "REGOLA LOGISTICA: L'atleta si allena in compagnia. Puoi includere liberamente esercizi che prevedono un passatore, un difensore o un coach attivo nella seduta."
+
             try:
                 for giorno_idx in range(1, num_giorni + 1):
                     status_text.text(f"Sviluppo Giorno {giorno_idx} di {num_giorni}...")
@@ -391,16 +398,17 @@ else:
                     - Livello: {livello} (TASSATIVO: adegua la complessità degli esercizi)
                     - Obiettivo Primario: {obiettivo} (deve essere il punto centrale della seduta)
                     - Limitazioni Fisiche / Infortuni / Note: {note_extra} (TASSATIVO: rispetta categoricamente ogni infortunio o vincolo logistico)
-                    - Modalità: {logistica} (Se "Da solo", vieta espressamente esercizi che richiedono passatori o difensori reali. Usa coni, sedia o auto-passaggi)
                     - Giocatori Ispirazione: {giocatori_simili}
-                    - DURATA TASSATIVA RICHESTA: {durata_singola}
+                    - DURATA TASSATIVA RICHISTA: {durata_singola}
+
+                    {vincolo_logistica}
 
                     REGOLE FONDAMENTALI ED ERMETICHE:
                     1. DIVIETO ASSOLUTO DI ESSERE RIASSUNTIVO: Esprimiti al massimo livello di dettaglio. Ogni esercizio deve contenere dettagli tecnici approfonditi, sia sul piano fisico/atletico che su quello cestistico. Spiega i movimenti, le posture e i motivi biomeccanici.
                     2. CALCOLO MATEMATICO DELLA DURATA ({durata_singola}):
                        - La somma dei minuti di TUTTI gli esercizi (riscaldamento, lavoro atletico, lavoro tecnico, riposi tra le serie, idratazione e defaticamento) DEVE CORRISPONDERE ESATTAMENTE A {durata_singola}.
-                       - Se l'utente richiede 2 ore (120 minuti), fornisci un numero corposo di esercizi divisi in blocchi realistici (es. Blocco 1: Attivazione e Mobilità 15 min; Blocco 2: Preparazione Fisica / Esplosività 25 min; Blocco 3: Tecnica Individuale e Footwork 35 min; Blocco 4: Situazionale e Decision Making 30 min; Blocco 5: Defaticamento e Stretching 15 min. Totale: 120 min).
-                    3. ZERO EMOJI: Non inserire alcuna emoji nel testo.
+                       - Se l'utente richiede 2 ore (120 minuti), fornisci un numero corposo di esercizi divisi in blocchi realistici.
+                    3. ZERO EMOJI E ZERO COMPAGNI SE "DA SOLO": Rispetta alla lettera il vincolo logistico fornito sopra.
                     4. EVITA RIPETIZIONI: Non ripetere gli stessi identici esercizi dei giorni scorsi: {esercizi_gia_inseriti}
                     5. STRUTTURA DETTAGLIATA PER OGNI ESERCIZIO:
                        - Nome Esercizio: [Nome professionale]
@@ -416,6 +424,7 @@ else:
                     system_prompt = (
                         "Sei una figura combinata d'élite: un Head Coach di pallacanestro e un Preparatore Atletico e Fisico di livello professionale. "
                         "Non rivelare mai la tua natura artificiale e non usare mai emoji. "
+                        "Rispetta CATEGORICAMENTE le direttive logistiche: se un utente si allena da solo, non inserire NESSUN esercizio con terze persone. "
                         "Non essere mai riassuntivo. Fornisci descrizioni estese, trasparenti e matematicamente precise rispetto al tempo totale richiesto."
                     )
 
@@ -438,7 +447,6 @@ else:
                         progress_bar.progress(giorno_idx / num_giorni)
                         time.sleep(1.5)
                         
-                    # GESTIONE SPECIFICA DEL LIMITE TOKEN / RATE LIMIT
                     except groq.RateLimitError:
                         st.error("Limite di richieste/token API raggiunto (Rate Limit). Attendi 1 o 2 minuti prima di rigenerare la scheda per consentire al sistema di resettare i limiti.")
                         errore_generazione = True
