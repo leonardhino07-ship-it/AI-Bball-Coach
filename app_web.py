@@ -1,4 +1,5 @@
 import streamlit as st
+import groq
 from groq import Groq
 from youtubesearchpython import VideosSearch
 import sqlite3
@@ -18,29 +19,26 @@ from reportlab.lib import colors
 # ==========================================
 st.set_page_config(page_title="Basketball Coach PRO", layout="wide")
 
-# CSS minimalista, pulito e ottimizzato per smartphone
+# CSS minimalista, pulito e ottimizzato per smartphone (zero fronzoli, zero emoji)
 st.markdown("""
 <style>
-    /* Sfondo e font di base */
     .stApp {
         background-color: #ffffff;
-        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
     
-    /* Titoli puliti e professionali */
     h1, h2, h3 {
         color: #111827 !important;
         font-weight: 700 !important;
         letter-spacing: -0.02em;
     }
     
-    /* Pulsanti ottimizzati per il tocco (Mobile) */
     .stButton > button {
         background-color: #000000 !important;
         color: #ffffff !important;
         border-radius: 6px !important;
         border: none !important;
-        padding: 0.75rem 1.5rem !important;
+        padding: 0.85rem 1.5rem !important;
         font-size: 1rem !important;
         font-weight: 600 !important;
         width: 100%;
@@ -50,7 +48,6 @@ st.markdown("""
         background-color: #374151 !important;
     }
     
-    /* Input fields minimalisti */
     .stTextInput > div > div > input, 
     .stNumberInput > div > div > input, 
     .stSelectbox > div > div > div, 
@@ -59,7 +56,7 @@ st.markdown("""
         border: 1px solid #d1d5db !important;
         background-color: #f9fafb !important;
         color: #111827 !important;
-        padding: 0.5rem !important;
+        padding: 0.6rem !important;
     }
     .stTextInput > div > div > input:focus, 
     .stNumberInput > div > div > input:focus, 
@@ -69,15 +66,13 @@ st.markdown("""
         box-shadow: none !important;
     }
     
-    /* Box del Form senza ombre pesanti, solo un bordo sottile */
     [data-testid="stForm"] {
         background-color: #ffffff;
-        padding: 1.5rem;
+        padding: 1.25rem;
         border-radius: 8px;
         border: 1px solid #e5e7eb;
     }
     
-    /* Tab di navigazione semplici */
     .stTabs [data-baseweb="tab-list"] {
         gap: 0;
         border-bottom: 1px solid #e5e7eb;
@@ -85,8 +80,8 @@ st.markdown("""
     .stTabs [data-baseweb="tab"] {
         padding: 12px 16px;
         background-color: transparent;
-        font-size: 1rem;
-        font-weight: 500;
+        font-size: 0.95rem;
+        font-weight: 600;
         color: #6b7280;
     }
     .stTabs [aria-selected="true"] {
@@ -94,7 +89,6 @@ st.markdown("""
         border-bottom: 2px solid #000000 !important;
     }
     
-    /* Rimozione decorazioni superflue */
     hr {
         border-color: #e5e7eb !important;
     }
@@ -102,7 +96,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 1. GESTIONE DATABASE LOCALE
+# 1. DATABASE LOCALE
 # ==========================================
 def init_db():
     conn = sqlite3.connect('utenti_basket.db')
@@ -184,7 +178,7 @@ def elimina_scheda_db(scheda_id):
 
 init_db()
 
-# Gestione dello stato della sessione
+# Stato sessione
 if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
 if 'username' not in st.session_state:
@@ -197,7 +191,7 @@ if 'nome_atleta_scheda' not in st.session_state:
     st.session_state['nome_atleta_scheda'] = ''
 
 # ==========================================
-# 2. GENERAZIONE SCHEDA PDF (Semplificata)
+# 2. ESPORTAZIONE PDF
 # ==========================================
 def pulisci_e_formatta_testo_pdf(testo):
     testo_pulito = re.sub(r'[^a-zA-Z0-9\s\.,;:!\?\-\(\)\[\]"\'/%\&\=\_\#\+àèéìòùÀÈÉÌÒÙáéíóúÁÉÍÓÚ]', '', testo)
@@ -213,21 +207,21 @@ def genera_pdf_scheda(testo_scheda, nome_utente):
     )
     styles = getSampleStyleSheet()
     
-    title_style = ParagraphStyle('DocTitle', parent=styles['Heading1'], fontSize=16, leading=20, textColor=colors.HexColor('#000000'), spaceAfter=10)
-    h2_style = ParagraphStyle('SectionH2', parent=styles['Heading2'], fontSize=13, leading=16, textColor=colors.HexColor('#111827'), spaceBefore=12, spaceAfter=6)
-    h3_style = ParagraphStyle('SectionH3', parent=styles['Heading3'], fontSize=11, leading=14, textColor=colors.HexColor('#374151'), spaceBefore=10, spaceAfter=4)
-    body_style = ParagraphStyle('BodyTextCustom', parent=styles['Normal'], fontSize=10, leading=14, textColor=colors.HexColor('#111827'), spaceAfter=4)
+    title_style = ParagraphStyle('DocTitle', parent=styles['Heading1'], fontSize=15, leading=18, textColor=colors.HexColor('#000000'), spaceAfter=8)
+    h2_style = ParagraphStyle('SectionH2', parent=styles['Heading2'], fontSize=12, leading=15, textColor=colors.HexColor('#111827'), spaceBefore=10, spaceAfter=4)
+    h3_style = ParagraphStyle('SectionH3', parent=styles['Heading3'], fontSize=10, leading=13, textColor=colors.HexColor('#374151'), spaceBefore=8, spaceAfter=2)
+    body_style = ParagraphStyle('BodyTextCustom', parent=styles['Normal'], fontSize=9.5, leading=13, textColor=colors.HexColor('#111827'), spaceAfter=4)
 
     story = []
-    story.append(Paragraph("<b>BASKETBALL COACH PRO - PROGRAMMA DI ALLENAMENTO</b>", title_style))
+    story.append(Paragraph("<b>BASKETBALL COACH PRO - SCHEDA DI PREPARAZIONE INTEGRALE</b>", title_style))
     story.append(Paragraph(f"<b>Atleta:</b> {html.escape(nome_utente)}", body_style))
-    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor('#000000'), spaceBefore=6, spaceAfter=12))
+    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor('#000000'), spaceBefore=4, spaceAfter=10))
     
     righe = testo_scheda.split('\n')
     for riga in righe:
         riga_str = riga.strip()
         if not riga_str:
-            story.append(Spacer(1, 4))
+            story.append(Spacer(1, 3))
             continue
             
         if riga_str.startswith('### '):
@@ -237,7 +231,7 @@ def genera_pdf_scheda(testo_scheda, nome_utente):
         elif riga_str.startswith('# '):
             story.append(Paragraph(pulisci_e_formatta_testo_pdf(riga_str.replace('# ', '')), title_style))
         elif riga_str.startswith('---'):
-            story.append(HRFlowable(width="100%", thickness=0.5, color=colors.gray, spaceBefore=6, spaceAfter=6))
+            story.append(HRFlowable(width="100%", thickness=0.5, color=colors.gray, spaceBefore=4, spaceAfter=4))
         else:
             story.append(Paragraph(pulisci_e_formatta_testo_pdf(riga_str), body_style))
             
@@ -246,13 +240,12 @@ def genera_pdf_scheda(testo_scheda, nome_utente):
     return buffer
 
 # ==========================================
-# 3. SCHERMATA LOGIN / REGISTRAZIONE
+# 3. AUTENTICAZIONE
 # ==========================================
 if not st.session_state['logged_in']:
     st.title("Basketball Coach PRO")
-    st.write("Accedi o crea un account per generare i tuoi programmi di allenamento.")
+    st.write("Accedi o crea un account per generare la tua programmazione tecnica e fisica.")
     
-    st.markdown("<br>", unsafe_allow_html=True)
     tab_login, tab_register = st.tabs(["Accedi", "Registrati"])
     
     with tab_login:
@@ -264,10 +257,10 @@ if not st.session_state['logged_in']:
                 st.session_state['logged_in'] = True
                 st.session_state['username'] = user_data[0]
                 st.session_state['giocatori_memoria'] = user_data[1]
-                st.success(f"Bentornato {user_data[0]}")
+                st.success(f"Autenticato come {user_data[0]}")
                 st.rerun()
             else:
-                st.error("Username o Password errati.")
+                st.error("Credenziali non valide.")
 
     with tab_register:
         reg_user = st.text_input("Scegli un Username")
@@ -276,22 +269,22 @@ if not st.session_state['logged_in']:
         if st.button("Crea Account"):
             if reg_user and reg_pass:
                 if crea_utente(reg_user, reg_pass, reg_email):
-                    st.success("Account creato con successo. Ora puoi accedere.")
+                    st.success("Account registrato. Esegui il login.")
                 else:
-                    st.error("Username già in uso. Scegline un altro.")
+                    st.error("Username non disponibile.")
             else:
-                st.warning("Inserisci Username e Password validi.")
+                st.warning("Compila tutti i campi richiesti.")
 
 # ==========================================
-# 4. APP PRINCIPALE
+# 4. PANNELLO PRINCIPALE
 # ==========================================
 else:
     col_head1, col_head2 = st.columns([3, 1])
     with col_head1:
-        st.title(f"Area Atleta: {st.session_state['username']}")
+        st.title(f"Atleta: {st.session_state['username']}")
     with col_head2:
         st.markdown("<br>", unsafe_allow_html=True)
-        if st.button("Esci (Logout)"):
+        if st.button("Disconnetti"):
             st.session_state['logged_in'] = False
             st.session_state['scheda_generata'] = ''
             st.rerun()
@@ -299,7 +292,7 @@ else:
     if "GROQ_API_KEY" in st.secrets:
         groq_api_key = st.secrets["GROQ_API_KEY"]
     else:
-        st.error("Chiave API non trovata nei Secrets di Streamlit.")
+        st.error("GROQ_API_KEY non configurata nei Secrets.")
         st.stop()
 
     client = Groq(api_key=groq_api_key)
@@ -325,36 +318,36 @@ else:
                 pass
 
         if not video_found:
-            return "Nessun esercizio specifico estratto dal web, procedi con la tua conoscenza delle metodologie dei Preparatori Atletici d'élite."
-        return "Conferma ispirazione web:\n" + "\n".join([f"- {t}" for t in video_found])
+            return "Nessun dato estratto dal web, procedi con il know-how dei Preparatori Atletici e Head Coach d'élite."
+        return "Riferimenti tecnici estratti:\n" + "\n".join([f"- {t}" for t in video_found])
 
-    main_tab1, main_tab2 = st.tabs(["Prepara Nuova Scheda", "Archivio Schede"])
+    main_tab1, main_tab2 = st.tabs(["Prepara Programma", "Archivio Schede"])
 
     with main_tab1:
-        st.write("Compila i campi per ricevere un programma settimanale rigoroso e strutturato sui tuoi dati.")
+        st.write("Inserisci i dati tecnici e fisici per generare la programmazione.")
 
         with st.form("coach_form"):
-            st.markdown("### Dati e Organizzazione")
+            st.markdown("### Dati Anagrafici e Cestistici")
             col1, col2 = st.columns(2)
             with col1:
-                nome = st.text_input("Nome dell'atleta", value=st.session_state['username'])
+                nome = st.text_input("Nome Atleta", value=st.session_state['username'])
                 eta = st.number_input("Età", min_value=5, max_value=60, value=18)
-                ruolo = st.selectbox("Ruolo in campo", ["Playmaker (PG)", "Guardia (SG)", "Ala Piccola (SF)", "Ala Grande (PF)", "Centro (C)", "Tutti i ruoli"])
-                livello = st.selectbox("Livello attuale", ["Principiante", "Intermedio", "Avanzato", "Professionista"])
+                ruolo = st.selectbox("Ruolo in Campo", ["Playmaker (PG)", "Guardia (SG)", "Ala Piccola (SF)", "Ala Grande (PF)", "Centro (C)", "Tutti i ruoli"])
+                livello = st.selectbox("Livello Agonistico", ["Principiante", "Intermedio", "Avanzato", "Professionista"])
             with col2:
-                obiettivo = st.text_input("Obiettivo (es. primo passo, tiro, letture)")
-                frequenza = st.selectbox("Giorni di allenamento a settimana", ["1-2 volte", "3-4 volte", "5+ volte"])
-                durata_singola = st.selectbox("Durata della singola sessione", ["30 minuti", "1 ora", "1 ora e 30", "2 ore", "2 ore e 30", "3 ore"])
-                logistica = st.selectbox("Modalità", ["Da solo", "In compagnia"])
+                obiettivo = st.text_input("Obiettivo Specifico (es. primo passo esplosivo, arresto e tiro, letture pick&roll)")
+                frequenza = st.selectbox("Frequenza Settimanale", ["1-2 volte", "3-4 volte", "5+ volte"])
+                durata_singola = st.selectbox("Durata della Singola Sessione", ["30 minuti", "1 ora", "1 ora e 30", "2 ore", "2 ore e 30", "3 ore"])
+                logistica = st.selectbox("Modalità di Lavoro", ["Da solo", "In compagnia"])
 
-            st.markdown("### Condizioni e Ispirazione")
+            st.markdown("### Condizioni Fisiche e Ispirazione")
             col3, col4 = st.columns(2)
             with col3:
-                giocatori_simili = st.text_input("Giocatori a cui ti ispiri", value=st.session_state['giocatori_memoria'])
+                giocatori_simili = st.text_input("Giocatori/Atleti di riferimento", value=st.session_state['giocatori_memoria'])
             with col4:
-                note_extra = st.text_area("Infortuni o limitazioni? (Es: fastidio al ginocchio, 1 solo pallone)")
+                note_extra = st.text_area("Infortuni, limitazioni fisiche o di attrezzatura (Es: sovraccarico al ginocchio, solo 1 pallone, no palestra pesi)")
             
-            submit_button = st.form_submit_button(label="Genera Programma")
+            submit_button = st.form_submit_button(label="Genera Programma Integrale")
 
         if submit_button:
             aggiorna_memoria_giocatori(st.session_state['username'], giocatori_simili)
@@ -365,108 +358,127 @@ else:
             if "3-4" in frequenza: num_giorni = 4
             elif "5+" in frequenza: num_giorni = 5
 
-            with st.spinner("Elaborazione del programma in corso..."):
+            with st.spinner("Ricerca metodologie e strutturazione scheda..."):
                 risultati_youtube = cerca_video_youtube_dettagliati(giocatori_simili, obiettivo)
 
             progress_bar = st.progress(0)
             status_text = st.empty()
 
-            scheda_completa = f"# PROGRAMMAZIONE SETTIMANALE - {nome.upper()}\n"
-            scheda_completa += f"**Ruolo:** {ruolo} | **Livello:** {livello} | **Età:** {eta} anni | **Obiettivo:** {obiettivo}\n"
+            scheda_completa = f"# PROGRAMMAZIONE INTEGRALE - {nome.upper()}\n"
+            scheda_completa += f"**Ruolo:** {ruolo} | **Livello:** {livello} | **Età:** {eta} anni | **Obiettivo Primario:** {obiettivo}\n"
             scheda_completa += f"**Frequenza:** {frequenza} ({num_giorni} giorni) | **Durata Sessione:** {durata_singola} | **Modalità:** {logistica}\n"
-            scheda_completa += f"**Condizioni Fisiche/Logistiche:** {note_extra}\n"
-            scheda_completa += f"**Ispirazione:** {giocatori_simili}\n\n---\n\n"
+            scheda_completa += f"**Condizioni Fisiche/Logistica:** {note_extra}\n"
+            scheda_completa += f"**Ispirazione Atleti:** {giocatori_simili}\n\n---\n\n"
+
+            errore_generazione = False
 
             try:
                 for giorno_idx in range(1, num_giorni + 1):
-                    status_text.text(f"Elaborazione Giorno {giorno_idx} di {num_giorni}...")
+                    status_text.text(f"Sviluppo Giorno {giorno_idx} di {num_giorni}...")
                     
                     esercizi_gia_inseriti = scheda_completa[-2500:] if giorno_idx > 1 else "Nessun esercizio precedente."
 
                     prompt_giorno = f"""
-                    Agisci come un Head Coach e Preparatore Atletico professionista di basket.
-                    NON MENZIONARE MAI DI ESSERE UN'IA, UN PROGRAMMA, O UN MODELLO LINGUISTICO. PARLA E SCRIVI DIRETTAMENTE COME UN COACH UMANO. NESSUN SALUTO INIZIALE TIPO "CIAO" O "ECCO LA SCHEDA", VAI DRITTO AL PIANO.
+                    Agisci simultaneamente come HEAD COACH (tecnica, tattica e decision-making) e PREPARATORE ATLETICO/FISICO (prevenzione, forza esplosiva, biomeccanica e mobilizzazione) di livello professionistico.
+                    NON MENZIONARE MAI DI ESSERE UN'IA, UN MODELLO O UN PROGRAMMA. PARLA DIRETTAMENTE COME UN TEAM DI COACH PROFESSIONISTI. NESSUN SALUTO INIZIALE TIPO "CIAO", VAI DRITTO AL PIANO.
 
-                    Struttura il **GIORNO {giorno_idx}** del programma.
-                    
-                    DATI DELL'ATLETA DA RISPETTARE TASSATIVAMENTE:
-                    - Nome: {nome} | Età: {eta} | Ruolo: {ruolo} | Livello: {livello}
-                    - Obiettivo: {obiettivo}
-                    - Limitazioni Fisiche/Logistiche: {note_extra}
-                    - Modalità: {logistica}
-                    - **DURATA RICHIESTA:** {durata_singola}
-                    
-                    REGOLE FONDAMENTALI (LEGGERE ATTENTAMENTE):
-                    1. RISPETTO ASSOLUTO DELLA DURATA: Questo è il punto più importante. Non fare riassunti o schede brevi. Devi generare un numero sufficiente di esercizi, specificando i minuti esatti per ciascuno (includendo serie, ripetizioni e pause), in modo che la SOMMA TOTALE DEL TEMPO impiegato corrisponda ESATTAMENTE a {durata_singola}. Se l'utente ha chiesto 2 ore (120 minuti), devi fornire esercizi che coprano fisicamente e realisticamente 120 minuti di lavoro (es: 20 min riscaldamento, 80 min di parte centrale divisa in esercizi lunghi, 20 min defaticamento).
-                    2. RISPETTO DELLE LIMITAZIONI: Evita esercizi dannosi se ci sono infortuni segnalati in "{note_extra}".
-                    3. LOGISTICA: Se l'atleta è "Da solo", non inserire esercizi che richiedono un passatore o un difensore reale. Usa auto-passaggi, sedie o coni.
-                    4. EVITA RIPETIZIONI: Non assegnare gli stessi identici esercizi dei giorni scorsi: {esercizi_gia_inseriti}
-                    5. FORMATO DETTAGLIATO E PULITO (Niente Emoji):
-                       - Nome Esercizio: [Nome]
-                       - Durata e Serie: [Es. 15 minuti - 4 serie x 10 ripetizioni]
-                       - Obiettivo: [Spiegazione tecnica]
-                       - Esecuzione: [Guida passo-passo del movimento]
-                       - Correzioni: [Errori da evitare]
+                    Struttura il **GIORNO {giorno_idx}** della programmazione.
 
-                    Scrivi solo la scheda tecnica di questo giorno, con un tono autorevole, diretto e professionale. Calcola bene i tempi.
+                    LETTURA COMPLETA E RIGOROSA DEI DATI INSERITI DALL'UTENTE:
+                    - Atleta: {nome}
+                    - Età: {eta} anni (TASSATIVO: calibra l'intensità e la prevenzione in base a quest'età)
+                    - Ruolo: {ruolo} (TASSATIVO: includi dettagli specifici per la posizione in campo)
+                    - Livello: {livello} (TASSATIVO: adegua la complessità degli esercizi)
+                    - Obiettivo Primario: {obiettivo} (deve essere il punto centrale della seduta)
+                    - Limitazioni Fisiche / Infortuni / Note: {note_extra} (TASSATIVO: rispetta categoricamente ogni infortunio o vincolo logistico)
+                    - Modalità: {logistica} (Se "Da solo", vieta espressamente esercizi che richiedono passatori o difensori reali. Usa coni, sedia o auto-passaggi)
+                    - Giocatori Ispirazione: {giocatori_simili}
+                    - DURATA TASSATIVA RICHESTA: {durata_singola}
+
+                    REGOLE FONDAMENTALI ED ERMETICHE:
+                    1. DIVIETO ASSOLUTO DI ESSERE RIASSUNTIVO: Esprimiti al massimo livello di dettaglio. Ogni esercizio deve contenere dettagli tecnici approfonditi, sia sul piano fisico/atletico che su quello cestistico. Spiega i movimenti, le posture e i motivi biomeccanici.
+                    2. CALCOLO MATEMATICO DELLA DURATA ({durata_singola}):
+                       - La somma dei minuti di TUTTI gli esercizi (riscaldamento, lavoro atletico, lavoro tecnico, riposi tra le serie, idratazione e defaticamento) DEVE CORRISPONDERE ESATTAMENTE A {durata_singola}.
+                       - Se l'utente richiede 2 ore (120 minuti), fornisci un numero corposo di esercizi divisi in blocchi realistici (es. Blocco 1: Attivazione e Mobilità 15 min; Blocco 2: Preparazione Fisica / Esplosività 25 min; Blocco 3: Tecnica Individuale e Footwork 35 min; Blocco 4: Situazionale e Decision Making 30 min; Blocco 5: Defaticamento e Stretching 15 min. Totale: 120 min).
+                    3. ZERO EMOJI: Non inserire alcuna emoji nel testo.
+                    4. EVITA RIPETIZIONI: Non ripetere gli stessi identici esercizi dei giorni scorsi: {esercizi_gia_inseriti}
+                    5. STRUTTURA DETTAGLIATA PER OGNI ESERCIZIO:
+                       - Nome Esercizio: [Nome professionale]
+                       - Durata e Volume: [Minuti esatti, Serie x Ripetizioni, Tempi di Recupero]
+                       - Dettaglio Preparatore Fisico: [Focus su forza, stabilità, catena cinetica, prevenzione o esplosività]
+                       - Dettaglio Head Coach: [Focus tecnico su footwork, angolo di stacco, tiro, maneggio palla o letture]
+                       - Esecuzione e Biomeccanica: [Descrizione passo-passo del movimento]
+                       - Errori da Evitare: [Istruzioni correttive dirette]
+
+                    Scrivi una scheda rigorosa, approfondita e priva di riassunti.
                     """
 
                     system_prompt = (
-                        "Sei un Coach di pallacanestro di alto livello. "
-                        "Il tuo tratto distintivo è l'assoluta precisione matematica nella durata degli allenamenti. "
-                        "Se un atleta chiede un allenamento di 3 ore, tu scrivi una scheda che duri esattamente 3 ore di lavoro reale. "
-                        "Non rivelare mai la tua natura artificiale e non usare mai emoji."
+                        "Sei una figura combinata d'élite: un Head Coach di pallacanestro e un Preparatore Atletico e Fisico di livello professionale. "
+                        "Non rivelare mai la tua natura artificiale e non usare mai emoji. "
+                        "Non essere mai riassuntivo. Fornisci descrizioni estese, trasparenti e matematicamente precise rispetto al tempo totale richiesto."
                     )
 
-                    chat_completion = client.chat.completions.create(
-                        model="llama-3.1-8b-instant",
-                        messages=[
-                            {"role": "system", "content": system_prompt},
-                            {"role": "user", "content": prompt_giorno}
-                        ],
-                        temperature=0.2,
-                        max_tokens=2500
-                    )
-
-                    testo_giorno = chat_completion.choices[0].message.content
-                    # Filtra eventuali emoji sfuggite al modello LLM
-                    testo_giorno = re.sub(r'[^\w\s.,;:!\?\-\(\)\[\]"\'/%\&\=\_\#\+àèéìòùÀÈÉÌÒÙáéíóúÁÉÍÓÚ]', '', testo_giorno)
-                    
-                    scheda_completa += f"## GIORNO {giorno_idx}\n\n" + testo_giorno + "\n\n---\n\n"
-                    
-                    progress_bar.progress(giorno_idx / num_giorni)
-                    time.sleep(2)
+                    try:
+                        chat_completion = client.chat.completions.create(
+                            model="llama-3.1-8b-instant",
+                            messages=[
+                                {"role": "system", "content": system_prompt},
+                                {"role": "user", "content": prompt_giorno}
+                            ],
+                            temperature=0.2,
+                            max_tokens=2500
+                        )
+                        
+                        testo_giorno = chat_completion.choices[0].message.content
+                        testo_giorno = re.sub(r'[^\w\s.,;:!\?\-\(\)\[\]"\'/%\&\=\_\#\+àèéìòùÀÈÉÌÒÙáéíóúÁÉÍÓÚ]', '', testo_giorno)
+                        
+                        scheda_completa += f"## GIORNO {giorno_idx}\n\n" + testo_giorno + "\n\n---\n\n"
+                        
+                        progress_bar.progress(giorno_idx / num_giorni)
+                        time.sleep(1.5)
+                        
+                    # GESTIONE SPECIFICA DEL LIMITE TOKEN / RATE LIMIT
+                    except groq.RateLimitError:
+                        st.error("Limite di richieste/token API raggiunto (Rate Limit). Attendi 1 o 2 minuti prima di rigenerare la scheda per consentire al sistema di resettare i limiti.")
+                        errore_generazione = True
+                        break
+                    except groq.APIError as e:
+                        st.error(f"Errore nella comunicazione con il server API: {e}")
+                        errore_generazione = True
+                        break
 
                 status_text.empty()
                 progress_bar.empty()
-                st.session_state['scheda_generata'] = scheda_completa
-
-                titolo_scheda = f"Scheda {obiettivo} ({frequenza} - {durata_singola})"
-                salva_scheda_db(st.session_state['username'], titolo_scheda, scheda_completa)
+                
+                if not errore_generazione:
+                    st.session_state['scheda_generata'] = scheda_completa
+                    titolo_scheda = f"Scheda {obiettivo} ({frequenza} - {durata_singola})"
+                    salva_scheda_db(st.session_state['username'], titolo_scheda, scheda_completa)
 
             except Exception as e:
-                st.error("Errore durante la preparazione della scheda. Riprova.")
+                st.error("Si è verificato un errore generico. Verifica la connessione e riprova.")
 
         if st.session_state['scheda_generata']:
-            st.success("Programma completato e salvato in Archivio.")
+            st.success("Programma generato e salvato in Archivio.")
             st.markdown("---")
             st.markdown(st.session_state['scheda_generata'])
             
             st.markdown("---")
-            st.subheader("Scarica in formato PDF")
+            st.subheader("Download Scheda PDF")
             
             nome_file = st.session_state['nome_atleta_scheda'] if st.session_state['nome_atleta_scheda'] else st.session_state['username']
             pdf_bytes = genera_pdf_scheda(st.session_state['scheda_generata'], nome_file)
             
             st.download_button(
-                label="Scarica Scheda PDF",
+                label="Scarica PDF Completo",
                 data=pdf_bytes,
-                file_name=f"Scheda_Basketball_{nome_file.replace(' ', '_')}.pdf",
+                file_name=f"Programma_Basket_{nome_file.replace(' ', '_')}.pdf",
                 mime="application/pdf"
             )
 
     with main_tab2:
-        st.write("Consulta o scarica le schede salvate in precedenza.")
+        st.write("Consulta le schede d'allenamento archiviate.")
         st.markdown("<br>", unsafe_allow_html=True)
         
         schede_salvate = get_schede_utente_db(st.session_state['username'])
@@ -475,7 +487,7 @@ else:
             st.info("Nessuna scheda presente in archivio.")
         else:
             opzioni_schede = {f"{s[1]} - {s[2]}": s for s in schede_salvate}
-            scheda_selezionata_label = st.selectbox("Seleziona una scheda dall'archivio:", list(opzioni_schede.keys()))
+            scheda_selezionata_label = st.selectbox("Seleziona dalla cronologia:", list(opzioni_schede.keys()))
             
             scheda_dati = opzioni_schede[scheda_selezionata_label]
             scheda_id = scheda_dati[0]
@@ -496,7 +508,7 @@ else:
             with col_btn2:
                 if st.button("Elimina", key=f"del_{scheda_id}"):
                     elimina_scheda_db(scheda_id)
-                    st.success("Scheda eliminata dall'archivio.")
+                    st.success("Scheda eliminata.")
                     st.rerun()
             
             st.markdown("---")
