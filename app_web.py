@@ -239,13 +239,13 @@ else:
                 pass
 
         if not video_found:
-            return "Nessun esercizio specifico estratto dal web, procedi con la tua profonda conoscenza delle metodologie dei Master Coach."
+            return "Nessun esercizio specifico estratto dal web, procedi con la tua profonda conoscenza delle metodologie dei Master Coach e dei Preparatori Atletici d'élite."
         return "Esercizi, concetti chiave e metodologie d'élite individuati per ispirazione dal web:\n" + "\n".join([f"- {t}" for t in video_found])
 
     main_tab1, main_tab2 = st.tabs(["➕ Genera Nuova Scheda", "📂 Archivio Schede Salvate"])
 
     with main_tab1:
-        st.write("Programmazione settimanale Elite. L'IA fonde i tuoi dati con le metodologie dei migliori allenatori al mondo (Phil Handy, Chip Engelland, ecc.) e dei migliori preparatori atletici (Paul Fabritz, Tim Grover) per garantirti efficienza totale e prevenzione infortuni.")
+        st.write("Programmazione settimanale Elite. L'IA fonde i tuoi dati con le metodologie e tattiche dei leggendari Head Coach (Phil Jackson, Gregg Popovich, Red Auerbach, Steve Kerr, Doc Rivers, Erik Spoelstra, Pat Riley, Nick Nurse, Luca Banchi, Joe Mazzulla), i Player Development Coach (Phil Handy, Chip Engelland) e i Preparatori Atletici d'Elite (Paul Fabritz, Tim Grover) per garantirti efficienza totale, intelligenza cestistica e prevenzione infortuni.")
 
         with st.form("coach_form"):
             st.subheader("Parametri del Giocatore e Programmazione")
@@ -276,7 +276,7 @@ else:
             if "3-4" in frequenza: num_giorni = 4
             elif "5+" in frequenza: num_giorni = 5
 
-            with st.spinner("Sincronizzazione con il database dei migliori Master Coach Mondiali (Handy, Engelland) e dei Preparatori Atletici d'Elite (Fabritz, Grover)..."):
+            with st.spinner("Sincronizzazione con il database dei Leggendari Head Coach (Jackson, Popovich, Auerbach, Kerr, Rivers, Spoelstra, Riley, Nurse, Banchi, Mazzulla), Skill Trainers (Handy, Engelland) e Preparatori Atletici (Fabritz, Grover)..."):
                 risultati_youtube = cerca_video_youtube_dettagliati(giocatori_simili, obiettivo)
 
             progress_bar = st.progress(0)
@@ -290,15 +290,31 @@ else:
 
             try:
                 for giorno_idx in range(1, num_giorni + 1):
-                    status_text.text(f"⏳ Elaborazione analitica Giorno {giorno_idx} di {num_giorni}: applicazione metodologie d'élite e protocolli fisici...")
+                    status_text.text(f"⏳ Elaborazione analitica Giorno {giorno_idx} di {num_giorni}: integrazione metodologie dei Master Coach, strategie tattiche e protocolli atletici...")
                     
                     esercizi_gia_inseriti = scheda_completa[-2500:] if giorno_idx > 1 else "Ancora nessun esercizio assegnato."
 
                     prompt_giorno = f"""
-                    Agisci come il G.O.A.T. dei Player Development Coach e dei Preparatori Atletici (Strength & Conditioning) NBA.
-                    Hai assimilato le conoscenze dei più grandi al mondo:
-                    - TECNICA: Phil Handy, Micah Lancaster, Chip Engelland (per ball handling, biomeccanica del tiro e skill acquisition).
-                    - PREPARAZIONE ATLETICA & PREVENZIONE: Paul Fabritz (PJF Performance, biomeccanica funzionale), Cory Schlesinger (attivazione neuromuscolare), Tim Grover e Mike Mancias (longevità, recupero, forza esplosiva).
+                    Agisci come la mente suprema della pallacanestro mondiale, unendo l'enciclopedia tattica, tecnica e atletica dei più grandi allenatori e preparatori della storia e del presente.
+                    Hai assimilato e integrato TUTTA la conoscenza disponibile online (siti, analisi tattiche, canali YouTube, clinic e libri) dei seguenti specialisti:
+
+                    1. LEGGENDE DELL'HEAD COACHING & STRATEGIA TATTICA:
+                       - Phil Jackson: Principi della Triangle Offense, spaziatura analitica, gestione mentale, equilibrio emotivo e intelligenza tattica di squadra.
+                       - Gregg Popovich: Movimento continuo di palla e uomini, concetti di extra-pass, fondamentali difensivi ferrei, gioco altruista e unselfishness.
+                       - Red Auerbach: Transizione ultra-rapida, contropiede primario e secondario, tenacia difensiva, condizionamento agonistico e mentalità vincente.
+                       - Steve Kerr: Moderno Pace & Space, movimento senza palla, tagli backdoor, letture Read & React, spaziatura per il tiro da tre punti.
+                       - Doc Rivers: Comunicazione difensiva ad alto livello, esecuzione impeccabile del Pick & Roll, leadership e mentalità di squadra.
+                       - Erik Spoelstra: Basketball posizionale/positionless, pressione difensiva aggressiva sulle linee di passaggio, Heat Culture, rettifiche tattiche in-game.
+                       - Pat Riley: Intensità, condizionamento fisico limite, difesa asfissiante, fisicità e disciplina di esecuzione inattaccabile.
+                       - Nick Nurse: Difese adattive e creative (Box & 1, zone trasformative), concetti offensivi non convenzionali e letture tattiche fluide.
+                       - Luca Banchi: Tattica FIBA/europea d'élite, disciplina negli eseguiti, Pick & Roll ad alto IQ cestistico, spaziatura continentale rigorosa.
+                       - Joe Mazzulla: Analitica avanzata del tiro da 3 e della spaziatura a 5 fuori, difese a cambi sistematici, decision-making ultra-rapido.
+
+                    2. SKILL DEVELOPMENT & TECNICA INDIVIDUALE:
+                       - Phil Handy, Micah Lancaster, Chip Engelland (per ball handling, biomeccanica del tiro, footwork e skill acquisition di livello NBA).
+
+                    3. PREPARAZIONE ATLETICA, PREVENZIONE INFORTUNI & RECUPERO:
+                       - Paul Fabritz (PJF Performance, biomeccanica funzionale e salto), Cory Schlesinger (attivazione neuromuscolare), Tim Grover e Mike Mancias (longevità, recupero, forza esplosiva).
 
                     Il tuo compito è strutturare il **GIORNO {giorno_idx}** di un programma di allenamento di {num_giorni} giorni totali.
                     Devi fondere le tue conoscenze metodologiche con i DATI DELL'ATLETA che NON DEVONO MAI ESSERE IGNORATI:
@@ -309,11 +325,11 @@ else:
                     
                     ISTRUZIONI E FILOSOFIA DI COMPOSIZIONE:
                     1. RISCALDAMENTO E DEFATICAMENTO D'ÉLITE (ATTENZIONE MASSIMA AI DATI): 
-                       Dimentica la "corsetta leggera e stretching statico".
-                       - Il Riscaldamento deve essere un protocollo di attivazione neuromuscolare e mobilità articolare dinamica (es. metodo Fabritz/Schlesinger). Adattalo TASSATIVAMENTE all'età ({eta} anni) e alle note fisiche ({note_extra}). Se l'utente segnala problemi (es. ginocchia), inserisci protocolli di pre-abilitazione mirati.
-                       - Il Defaticamento deve essere un protocollo di decompressione spinale, stretching fasciale e recupero profondo (es. metodo Mancias/Grover), calibrato per il post-sessione.
+                       - Riscaldamento: Attivazione neuromuscolare e mobilità articolare dinamica (es. metodo Fabritz/Schlesinger). Adattalo TASSATIVAMENTE all'età ({eta} anni) e alle note fisiche ({note_extra}). Se ci sono infortuni o dolori segnalati, inserisci esercizi di pre-abilitazione mirati.
+                       - Defaticamento: Decompressione spinale, stretching fasciale e recupero profondo (es. metodo Mancias/Grover/Riley), calibrato per il post-sessione.
 
-                    2. FILOSOFIA TECNICA (GAME-SPEED): Ogni esercizio con palla deve tradursi in partita. Nessun esercizio lento o inutile. Usa auto-passaggi se l'utente è "Da solo".
+                    2. PARTE CENTRALE TECNICO-TATTICA (GAME-SPEED & BASKETBALL IQ):
+                       Ogni esercizio con palla deve integrare le letture tattiche e le metodologie dei Master Coach sopracitati (es. spaziatura di Kerr/Mazzulla, letture P&R di Banchi/Rivers, ball handling di Handy, movimento di palla di Popovich). Nessun esercizio passivo. Usa auto-passaggi se l'utente è "Da solo".
 
                     3. ADATTAMENTO LOGISTICO: Se l'utente si allena "Da solo", NON inserire MAI compagni o difensori reali.
 
@@ -324,17 +340,19 @@ else:
                     5. FORMATO DI SPIEGAZIONE IPER-DETTAGLIATO OBBLIGATORIO PER OGNI ESERCIZIO (anche warm-up e cool-down):
                        - **Nome Esercizio:** [Nome chiaro e professionale]
                        - **Durata & Serie:** [Serie | Reps o Tempo | Recupero]
-                       - **🎯 Obiettivo Specifico e Filosofia:** [Spiega analiticamente il perché biomeccanico o neuromuscolare, citando implicitamente la logica dei Master Coach/Trainers e tenendo conto dell'età e dei dolori/note dell'utente]
-                       - **📖 Esecuzione Passo-Passo:** [Guida estrema del movimento: postura, attivazione del core, appoggio dei piedi, ritmo]
-                       - **⚠️ Errori Comuni da Evitare:** [Indica 2 errori tecnici o di postura e come l'allenatore li correggerebbe a bordo campo]
+                       - **🎯 Obiettivo Specifico e Filosofia:** [Spiega analiticamente il perché biomeccanico, tattico o neuromuscolare, citando la logica dei Master Coach/Trainers (es. Popovich, Kerr, Jackson, Fabritz) e tenendo conto dell'età e dei dolori/note dell'utente]
+                       - **📖 Esecuzione Passo-Passo:** [Guida estrema del movimento: postura, attivazione del core, appoggio dei piedi, ritmo, spaziatura e letture]
+                       - **⚠️ Errori Comuni da Evitare:** [Indica 2 errori tecnici, tattici o di postura e come l'allenatore li correggerebbe a bordo campo]
 
                     IMPORTANTE: Non includere link YouTube nel testo finale. Usa un tono professionale, autorevole, ma motivante.
                     """
 
                     system_prompt = (
-                        "Sei un'IA d'élite che incarna i migliori Player Development Coach e i migliori "
-                        "Strength & Conditioning Coach (preparatori atletici) della storia della NBA. "
-                        "Genera schede perfette basate su efficienza tecnica, prevenzione infortuni e biomeccanica. "
+                        "Sei un'IA d'élite che incarna i più grandi Head Coach della storia e del presente della NBA e del basket internazionale "
+                        "(Phil Jackson, Gregg Popovich, Red Auerbach, Steve Kerr, Doc Rivers, Erik Spoelstra, Pat Riley, Nick Nurse, Luca Banchi, Joe Mazzulla), "
+                        "unita ai migliori Player Development Coach (Phil Handy, Chip Engelland) e ai migliori "
+                        "Strength & Conditioning Coach (Paul Fabritz, Tim Grover, Cory Schlesinger, Mike Mancias). "
+                        "Genera schede perfette basate su efficienza tecnica, intelligenza tattica, prevenzione infortuni e biomeccanica. "
                         "Non ignorare MAI i dati inseriti dall'utente (in particolare età e infortuni)."
                     )
 
