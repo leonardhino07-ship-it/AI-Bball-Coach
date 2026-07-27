@@ -245,7 +245,7 @@ else:
     main_tab1, main_tab2 = st.tabs(["➕ Genera Nuova Scheda", "📂 Archivio Schede Salvate"])
 
     with main_tab1:
-        st.write("Programmazione settimanale Elite. L'IA fonde i tuoi dati con le metodologie dei migliori allenatori al mondo (Phil Handy, Chip Engelland, ecc.) per garantirti efficienza totale.")
+        st.write("Programmazione settimanale Elite. L'IA fonde i tuoi dati con le metodologie dei migliori allenatori al mondo (Phil Handy, Chip Engelland, ecc.) e dei migliori preparatori atletici (Paul Fabritz, Tim Grover) per garantirti efficienza totale e prevenzione infortuni.")
 
         with st.form("coach_form"):
             st.subheader("Parametri del Giocatore e Programmazione")
@@ -261,9 +261,9 @@ else:
                 durata_singola = st.radio("Durata esatta singola sessione:", ["30 minuti", "1 ora", "1 ora e 30", "2 ore", "2 ore e 30", "3 ore"])
                 logistica = st.radio("Logistica di allenamento:", ["Da solo", "In compagnia"])
 
-            st.subheader("Film Study & Giocatori Modello")
+            st.subheader("Film Study & Salute Fisica")
             giocatori_simili = st.text_input("A chi ti ispiri? (Separa con virgola. Es: Stephen Curry, Kyrie Irving)", value=st.session_state['giocatori_memoria'])
-            note_extra = st.text_area("Note (es. infortuni, attrezzi a disposizione come coni, pallina da tennis, step)")
+            note_extra = st.text_area("Note e Infortuni (ES. 'Infiammazione al ginocchio', 'Ho solo due coni e una palla medica', 'Dolore alla schiena')")
             
             submit_button = st.form_submit_button(label="Genera Scheda di Allenamento Elite")
 
@@ -276,67 +276,66 @@ else:
             if "3-4" in frequenza: num_giorni = 4
             elif "5+" in frequenza: num_giorni = 5
 
-            with st.spinner("Sincronizzazione con il database dei migliori Master Coach Mondiali e analisi delle metodologie d'élite..."):
+            with st.spinner("Sincronizzazione con il database dei migliori Master Coach Mondiali (Handy, Engelland) e dei Preparatori Atletici d'Elite (Fabritz, Grover)..."):
                 risultati_youtube = cerca_video_youtube_dettagliati(giocatori_simili, obiettivo)
 
             progress_bar = st.progress(0)
             status_text = st.empty()
 
             scheda_completa = f"# 🏀 PROGRAMMAZIONE SETTIMANALE ELITE - {nome.upper()}\n"
-            scheda_completa += f"**Ruolo:** {ruolo} | **Livello:** {livello} | **Obiettivo:** {obiettivo}\n"
+            scheda_completa += f"**Ruolo:** {ruolo} | **Livello:** {livello} | **Età:** {eta} anni | **Obiettivo:** {obiettivo}\n"
             scheda_completa += f"**Frequenza:** {frequenza} ({num_giorni} giorni di lavoro) | **Durata Sessione:** {durata_singola} | **Modalità:** {logistica}\n"
+            scheda_completa += f"**Note Fisiche/Logistiche:** {note_extra}\n"
             scheda_completa += f"**Ispirazione:** {giocatori_simili}\n\n---\n\n"
 
             try:
                 for giorno_idx in range(1, num_giorni + 1):
-                    status_text.text(f"⏳ Elaborazione analitica Giorno {giorno_idx} di {num_giorni}: applicazione metodologie d'élite e controllo ripetizioni...")
+                    status_text.text(f"⏳ Elaborazione analitica Giorno {giorno_idx} di {num_giorni}: applicazione metodologie d'élite e protocolli fisici...")
                     
                     esercizi_gia_inseriti = scheda_completa[-2500:] if giorno_idx > 1 else "Ancora nessun esercizio assegnato."
 
                     prompt_giorno = f"""
-                    Agisci come il G.O.A.T. dei Preparatori Atletici e Player Development Coach. Hai assimilato e padroneggi perfettamente le metodologie dei più grandi allenatori al mondo:
-                    - Phil Handy e Micah Lancaster (per il Ball Handling avanzato, decelarazione, footwork e skill acquisition)
-                    - Chip Engelland (per l'efficienza e la biomeccanica del tiro perfetta)
-                    - Gregg Popovich e Steve Kerr (per le letture di gioco, le spaziature e il decision-making)
-                    - Tim Grover e Mike Mancias (per preparazione atletica, forza esplosiva e prevenzione infortuni)
+                    Agisci come il G.O.A.T. dei Player Development Coach e dei Preparatori Atletici (Strength & Conditioning) NBA.
+                    Hai assimilato le conoscenze dei più grandi al mondo:
+                    - TECNICA: Phil Handy, Micah Lancaster, Chip Engelland (per ball handling, biomeccanica del tiro e skill acquisition).
+                    - PREPARAZIONE ATLETICA & PREVENZIONE: Paul Fabritz (PJF Performance, biomeccanica funzionale), Cory Schlesinger (attivazione neuromuscolare), Tim Grover e Mike Mancias (longevità, recupero, forza esplosiva).
 
-                    Il tuo compito è strutturare il **GIORNO {giorno_idx}** di un programma di allenamento di {num_giorni} giorni totali. 
-                    Devi fondere le tue profonde conoscenze metodologiche mondiali con i seguenti DATI DELL'ATLETA:
+                    Il tuo compito è strutturare il **GIORNO {giorno_idx}** di un programma di allenamento di {num_giorni} giorni totali.
+                    Devi fondere le tue conoscenze metodologiche con i DATI DELL'ATLETA che NON DEVONO MAI ESSERE IGNORATI:
                     - Nome: {nome} | Età: {eta} | Ruolo: {ruolo} | Livello: {livello}
                     - OBIETTIVO PRINCIPALE: {obiettivo}
-                    - DURATA SESSIONE: {durata_singola}
-                    - LOGISTICA DI ALLENAMENTO: {logistica}
-                    - NOTE E ATTREZZI: {note_extra}
-                    - ISPIRAZIONE (Giocatori Modello): {giocatori_simili}
-                    - SPUNTI DI RICERCA WEB: {risultati_youtube}
-
-                    ISTRUZIONI E FILOSOFIA DI COMPOSIZIONE:
-                    1. FILOSOFIA D'ÉLITE: Ogni esercizio deve tradursi in partita ("Game-like" e "Game-speed"). Niente esercizi lenti o inutili. Ogni movimento deve avere un fine biomeccanico o situazionale preciso, proprio come insegnano i migliori allenatori della NBA.
+                    - NOTE FISICHE E INFORTUNI / ATTREZZI: {note_extra}
+                    - DURATA: {durata_singola} | LOGISTICA: {logistica}
                     
-                    2. ADATTAMENTO LOGISTICO ASSOLUTO: Valuta la logistica richiesta. Se l'utente ha selezionato 'Da solo', NON INSERIRE MAI esercizi che richiedano compagni, passatori o difensori. Usa l'auto-passaggio, ostacoli immaginari, coni o tabellone.
+                    ISTRUZIONI E FILOSOFIA DI COMPOSIZIONE:
+                    1. RISCALDAMENTO E DEFATICAMENTO D'ÉLITE (ATTENZIONE MASSIMA AI DATI): 
+                       Dimentica la "corsetta leggera e stretching statico".
+                       - Il Riscaldamento deve essere un protocollo di attivazione neuromuscolare e mobilità articolare dinamica (es. metodo Fabritz/Schlesinger). Adattalo TASSATIVAMENTE all'età ({eta} anni) e alle note fisiche ({note_extra}). Se l'utente segnala problemi (es. ginocchia), inserisci protocolli di pre-abilitazione mirati.
+                       - Il Defaticamento deve essere un protocollo di decompressione spinale, stretching fasciale e recupero profondo (es. metodo Mancias/Grover), calibrato per il post-sessione.
 
-                    3. VARIETÀ ASSOLUTA E ZERO RIPETIZIONI: Usa il tuo immenso database di conoscenze per fornire esercizi sempre nuovi. NON ripetere MAI esercizi o varianti banali degli esercizi già assegnati nei giorni precedenti.
-                       Esercizi già assegnati (NON REPLICARLI):
+                    2. FILOSOFIA TECNICA (GAME-SPEED): Ogni esercizio con palla deve tradursi in partita. Nessun esercizio lento o inutile. Usa auto-passaggi se l'utente è "Da solo".
+
+                    3. ADATTAMENTO LOGISTICO: Se l'utente si allena "Da solo", NON inserire MAI compagni o difensori reali.
+
+                    4. VARIETÀ ASSOLUTA: Usa il tuo database per fornire esercizi sempre nuovi e non ripetitivi.
+                       Esercizi già assegnati in precedenza:
                        {esercizi_gia_inseriti}
 
-                    4. STRUTTURA DELLA SESSIONE: Dividi fluidamente il GIORNO {giorno_idx} in: Riscaldamento Dinamico & Mobilità, Blocco Tecnico & Signature Drills (es. lavoro di footwork e palla), Blocco Situazionale & Tiro (Game-Speed), Defaticamento & Flex.
-
-                    5. SPIEGAZIONE IPER-DETTAGLIATA (FORMATO OBBLIGATORIO):
-                       Per garantire all'atleta la massima comprensione, per OGNI SINGOLO ESERCIZIO (inclusi riscaldamento e defaticamento) usa ESATTAMENTE questo formato:
+                    5. FORMATO DI SPIEGAZIONE IPER-DETTAGLIATO OBBLIGATORIO PER OGNI ESERCIZIO (anche warm-up e cool-down):
                        - **Nome Esercizio:** [Nome chiaro e professionale]
                        - **Durata & Serie:** [Serie | Reps o Tempo | Recupero]
-                       - **🎯 Obiettivo Specifico e Filosofia:** [Analisi tecnica di cosa si migliora e perché i coach d'élite lo usano]
-                       - **📖 Esecuzione Passo-Passo:** [Guida estrema: postura iniziale, dettagli sul footwork, angoli del corpo, uso della mano off-hand, rilascio]
-                       - **⚠️ Errori Comuni da Evitare:** [Indica i 2 errori tecnici, posturali o di timing più frequenti e come l'allenatore li correggerebbe a bordo campo]
+                       - **🎯 Obiettivo Specifico e Filosofia:** [Spiega analiticamente il perché biomeccanico o neuromuscolare, citando implicitamente la logica dei Master Coach/Trainers e tenendo conto dell'età e dei dolori/note dell'utente]
+                       - **📖 Esecuzione Passo-Passo:** [Guida estrema del movimento: postura, attivazione del core, appoggio dei piedi, ritmo]
+                       - **⚠️ Errori Comuni da Evitare:** [Indica 2 errori tecnici o di postura e come l'allenatore li correggerebbe a bordo campo]
 
-                    IMPORTANTE: Non includere mai link, URL o riferimenti a YouTube nel testo finale. Il testo deve sembrare un manuale scritto dal miglior coach del mondo in persona.
+                    IMPORTANTE: Non includere link YouTube nel testo finale. Usa un tono professionale, autorevole, ma motivante.
                     """
 
                     system_prompt = (
-                        "Sei un'Intelligenza Artificiale d'élite che incarna i più grandi Player Development Coach e Head Coach "
-                        "nella storia del basket. Genera schede basate su efficienza biomeccanica, game-speed, e game-like situations. "
-                        "Analizza i dati utente con rigore assoluto, applica logistica impeccabile (Da solo = mai compagni) e non "
-                        "ripetere mai gli stessi esercizi."
+                        "Sei un'IA d'élite che incarna i migliori Player Development Coach e i migliori "
+                        "Strength & Conditioning Coach (preparatori atletici) della storia della NBA. "
+                        "Genera schede perfette basate su efficienza tecnica, prevenzione infortuni e biomeccanica. "
+                        "Non ignorare MAI i dati inseriti dall'utente (in particolare età e infortuni)."
                     )
 
                     chat_completion = client.chat.completions.create(
